@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from app.api.routes import health
+from app.api.routes import health, process
 from app.core.config import settings
 
 app = FastAPI(
@@ -12,6 +12,7 @@ app = FastAPI(
 )
 
 app.include_router(health.router, prefix="/api", tags=["Health"])
+app.include_router(process.router, prefix="/api/v1", tags=["Process"])
 
 
 @app.get("/")

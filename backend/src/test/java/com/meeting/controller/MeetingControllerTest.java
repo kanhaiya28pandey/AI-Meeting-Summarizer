@@ -1,8 +1,12 @@
 package com.meeting.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.meeting.dto.AiProcessResponse;
 import com.meeting.dto.CreateMeetingRequest;
 import com.meeting.dto.MeetingResponse;
+import com.meeting.exception.AiServiceException;
+import com.meeting.model.MeetingStatus;
+import com.meeting.service.AiServiceClient;
 import com.meeting.service.MeetingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +24,10 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -39,6 +48,9 @@ class MeetingControllerTest {
 
     @Autowired
     private MeetingService meetingService;
+
+    @MockitoBean
+    private AiServiceClient aiServiceClient;
 
     private CreateMeetingRequest validRequest;
 
@@ -187,5 +199,86 @@ class MeetingControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status", is("UP")))
                 .andExpect(jsonPath("$.service", is("AI Meeting Summarizer Backend")));
+    }
+
+    @Test
+    void test13_processMeeting_success_shouldReturn202() throws Exception {
+        MeetingResponse created = meetingService.createMeeting(validRequest);
+        UUID meetingId = created.getId();
+
+        when(aiServiceClient.triggerProcessing(meetingId)).thenReturn(
+                new AiProcessResponse(true, meetingId, "AI Meeting Summarizer AI Service", "Meeting processing request accepted")
+        );
+
+        mockMvc.perform(post("/api/meetings/{id}/process", meetingId))
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.success", is(true)))
+                .andExpect(jsonPath("$.meetingId", is(meetingId.toString())))
+                .andExpect(jsonPath("$.service", is("AI Meeting Summarizer AI Service")))
+                .andExpect(jsonPath("$.message", is("Meeting processing request accepted")));
+
+        verify(aiServiceClient).triggerProcessing(meetingId);
+    }
+
+    @Test
+    void test14_processMeeting_nonExistentMeeting_shouldReturn404AndNotCallAiService() throws Exception {
+        UUID nonExistentId = UUID.fromString("00000000-0000-0000-0000-000000000000");
+
+        mockMvc.perform(post("/api/meetings/{id}/process", nonExistentId))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status", is(404)))
+                .andExpect(jsonPath("$.error", is("Not Found")));
+
+        verifyNoInteractions(aiServiceClient);
+    }
+
+    @Test
+    void test15_processMeeting_invalidUuid_shouldReturn400AndNotCallAiService() throws Exception {
+        mockMvc.perform(post("/api/meetings/not-a-valid-uuid/process"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status", is(400)))
+                .andExpect(jsonPath("$.error", is("Bad Request")));
+
+        verifyNoInteractions(aiServiceClient);
+    }
+
+    @Test
+    void test16_processMeeting_aiServiceUnavailable_shouldReturn503() throws Exception {
+        MeetingResponse created = meetingService.createMeeting(validRequest);
+        UUID meetingId = created.getId();
+
+        when(aiServiceClient.triggerProcessing(meetingId)).thenThrow(
+                new AiServiceException("The AI service is currently unavailable or timed out")
+        );
+
+        mockMvc.perform(post("/api/meetings/{id}/process", meetingId))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.status", is(503)))
+                .andExpect(jsonPath("$.error", is("AI Service Unavailable")))
+                .andExpect(jsonPath("$.message", is("The AI service is currently unavailable or timed out")))
+                .andExpect(jsonPath("$.path", is("/api/meetings/" + meetingId + "/process")));
+
+        verify(aiServiceClient).triggerProcessing(meetingId);
+    }
+
+    @Test
+    void test17_processMeeting_success_doesNotAlterMeetingStatusOrFields() throws Exception {
+        MeetingResponse created = meetingService.createMeeting(validRequest);
+        UUID meetingId = created.getId();
+
+        when(aiServiceClient.triggerProcessing(meetingId)).thenReturn(
+                new AiProcessResponse(true, meetingId, "AI Meeting Summarizer AI Service", "Meeting processing request accepted")
+        );
+
+        mockMvc.perform(post("/api/meetings/{id}/process", meetingId))
+                .andExpect(status().isAccepted());
+
+        // Verify state of meeting in database remains unchanged
+        MeetingResponse reloaded = meetingService.getMeetingById(meetingId);
+        org.junit.jupiter.api.Assertions.assertEquals(MeetingStatus.UPLOADED, reloaded.getStatus());
+        org.junit.jupiter.api.Assertions.assertNull(reloaded.getTranscript());
+        org.junit.jupiter.api.Assertions.assertNull(reloaded.getSummary());
+        org.junit.jupiter.api.Assertions.assertTrue(reloaded.getKeyDecisions().isEmpty());
+        org.junit.jupiter.api.Assertions.assertTrue(reloaded.getActionItems().isEmpty());
     }
 }

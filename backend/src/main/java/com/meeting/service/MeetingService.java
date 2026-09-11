@@ -1,5 +1,6 @@
 package com.meeting.service;
 
+import com.meeting.dto.AiProcessResponse;
 import com.meeting.dto.CreateMeetingRequest;
 import com.meeting.dto.MeetingResponse;
 import com.meeting.exception.MeetingNotFoundException;
@@ -19,9 +20,11 @@ import java.util.stream.Collectors;
 public class MeetingService {
 
     private final MeetingRepository meetingRepository;
+    private final AiServiceClient aiServiceClient;
 
-    public MeetingService(MeetingRepository meetingRepository) {
+    public MeetingService(MeetingRepository meetingRepository, AiServiceClient aiServiceClient) {
         this.meetingRepository = meetingRepository;
+        this.aiServiceClient = aiServiceClient;
     }
 
     public MeetingResponse createMeeting(CreateMeetingRequest request) {
@@ -60,5 +63,12 @@ public class MeetingService {
             throw new MeetingNotFoundException(id);
         }
         meetingRepository.deleteById(id);
+    }
+
+    public AiProcessResponse processMeeting(UUID id) {
+        if (!meetingRepository.existsById(id)) {
+            throw new MeetingNotFoundException(id);
+        }
+        return aiServiceClient.triggerProcessing(id);
     }
 }

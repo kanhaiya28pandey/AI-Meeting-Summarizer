@@ -77,13 +77,35 @@ The service will start on `http://localhost:8000`.
 }
 ```
 
-### 2. Interactive Swagger UI
+### 2. Meeting Processing Request (Phase 5)
+* **Method & Path**: `POST /api/v1/process`
+* **Status**: `202 Accepted`
+* **Request Body**:
+```json
+{
+  "meetingId": "8e0c6f35-5b3f-4e6e-9d5e-7d2a4a3f7e10"
+}
+```
+* **Response Body**:
+```json
+{
+  "success": true,
+  "meetingId": "8e0c6f35-5b3f-4e6e-9d5e-7d2a4a3f7e10",
+  "service": "AI Meeting Summarizer AI Service",
+  "message": "Meeting processing request accepted"
+}
+```
+> [!NOTE]
+> This endpoint currently only validates and acknowledges processing requests from Spring Boot.
+> Actual transcription and AI processing will be implemented in later phases.
+
+### 3. Interactive Swagger UI
 Explore and test the API visually at:
 ```text
 http://localhost:8000/docs
 ```
 
-### 3. ReDoc UI
+### 4. ReDoc UI
 Read comprehensive API documentation at:
 ```text
 http://localhost:8000/redoc
@@ -99,11 +121,11 @@ pytest
 
 ---
 
-## Current Status & Limitations (Phase 4)
+## Current Status & Limitations (Phase 5)
 * **Microservice Foundation**: Operational & tested
 * **Health Check & Docs**: Operational & verified
+* **Spring Boot Integration**: Operational (FastAPI acknowledges Spring Boot requests with `202 Accepted`)
 * **Gemini Integration**: Not implemented (scheduled for Phase 6)
 * **Transcription Pipeline**: Not implemented (scheduled for Phase 7)
 * **Audio/Video Processing**: Not implemented (scheduled for Phase 7 & 15)
-* **Spring Boot Integration**: Not implemented (scheduled for Phase 5)
-* **Database Access**: Not implemented (stateless microservice by design)
+* **Database Access**: Not implemented (stateless microservice by design, zero DB connection)

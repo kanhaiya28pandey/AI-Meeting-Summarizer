@@ -17,6 +17,7 @@ The backend connects to PostgreSQL using standard environment variables with con
 | `DB_URL` | JDBC Connection URL | `jdbc:postgresql://localhost:5432/meeting_summarizer` |
 | `DB_USERNAME` | Database username | `postgres` |
 | `DB_PASSWORD` | Database password | `postgres` |
+| `AI_SERVICE_URL` | FastAPI AI Service URL | `http://localhost:8000` |
 
 > [!NOTE]
 > Never hardcode or commit real credentials to Git. Export `DB_PASSWORD` in your local environment or pass it at runtime.
@@ -132,7 +133,23 @@ CREATE DATABASE meeting_summarizer;
 
 ---
 
-### 6. Error Response Formats
+### 6. Process Meeting (Phase 5)
+* **Method & Path**: `POST /api/meetings/{id}/process`
+* **Status**: `202 Accepted` (or `404 Not Found` if meeting nonexistent, `400 Bad Request` if invalid UUID, `503 Service Unavailable` if AI service down/timed out)
+* **Description**: Verifies the meeting exists in PostgreSQL and triggers processing communication with the FastAPI AI service.
+* **Response (202 Accepted)**:
+```json
+{
+  "success": true,
+  "meetingId": "52545fbb-fe1a-4010-ae7e-62fa218b83e5",
+  "service": "AI Meeting Summarizer AI Service",
+  "message": "Meeting processing request accepted"
+}
+```
+
+---
+
+### 7. Error Response Formats
 
 #### Validation Error (`400 Bad Request`)
 ```json
@@ -159,6 +176,17 @@ CREATE DATABASE meeting_summarizer;
   "error": "Not Found",
   "message": "Meeting not found with ID: 52545fbb-fe1a-4010-ae7e-62fa218b83e5",
   "path": "/api/meetings/52545fbb-fe1a-4010-ae7e-62fa218b83e5"
+}
+```
+
+#### Service Unavailable Error (`503 Service Unavailable`)
+```json
+{
+  "timestamp": "2026-09-11T17:25:00.0000000",
+  "status": 503,
+  "error": "AI Service Unavailable",
+  "message": "The AI service is currently unavailable or timed out",
+  "path": "/api/meetings/52545fbb-fe1a-4010-ae7e-62fa218b83e5/process"
 }
 ```
 

@@ -1,9 +1,11 @@
 package com.meeting.controller;
 
+import com.meeting.dto.AiProcessResponse;
 import com.meeting.dto.CreateMeetingRequest;
 import com.meeting.dto.MeetingResponse;
 import com.meeting.service.MeetingService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -50,5 +52,11 @@ public class MeetingController {
     public ResponseEntity<Void> deleteMeeting(@PathVariable UUID id) {
         meetingService.deleteMeeting(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/process")
+    public ResponseEntity<AiProcessResponse> processMeeting(@PathVariable UUID id) {
+        AiProcessResponse response = meetingService.processMeeting(id);
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
     }
 }
