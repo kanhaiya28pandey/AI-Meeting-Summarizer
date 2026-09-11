@@ -1,42 +1,275 @@
-import React from 'react';
+import { useEffect, useState, type FC } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ListFilter } from 'lucide-react';
+import { Plus, RefreshCw, AlertCircle } from 'lucide-react';
+import type { Meeting } from '../types/meeting';
+import { api } from '../services/api';
+import { getFriendlyErrorMessage } from '../utils/apiError';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Button } from '../components/ui/Button';
-import { EmptyState } from '../components/ui/EmptyState';
+import { ErrorState } from '../components/ui/ErrorState';
+import { Card } from '../components/ui/Card';
+import { MeetingList } from '../components/meeting/MeetingList';
+import { ConfirmDialog } from '../components/common/ConfirmDialog';
 
-export const Meetings: React.FC = () => {
+export const Meetings: FC = () => {
   const navigate = useNavigate();
+
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Delete flow state
+  const [deleteTarget, setDeleteTarget] = useState<Meeting | null>(null);
+  const [deleting, setDeleting] = useState<boolean>(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const handleRefresh = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await api.getMeetings();
+      setMeetings(data || []);
+    } catch (err) {
+      setError(getFriendlyErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let active = true;
+    api.getMeetings()
+      .then((data) => {
+        if (active) {
+          setMeetings(data || []);
+          setError(null);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (active) {
+          setError(getFriendlyErrorMessage(err));
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const handleOpenDelete = (meeting: Meeting) => {
+    setDeleteError(null);
+    setDeleteTarget(meeting);
+  };
+
+  const handleCancelDelete = () => {
+    if (deleting) return;
+    setDeleteTarget(null);
+    setDeleteError(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget || deleting) return;
+    const targetId = deleteTarget.id;
+
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await api.deleteMeeting(targetId);
+      // Immediate removal from list upon 204 No Content
+      setMeetings((prev) => prev.filter((m) => m.id !== targetId));
+      setDeleteTarget(null);
+    } catch (err) {
+      setDeleteError(
+        typeof err === 'object' && err !== null && 'message' in err
+          ? String(err.message)
+          : "Couldn't delete this meeting. Please try again."
+      );
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleViewMeeting = (id: string) => {
+    navigate(`/meetings/${id}`);
+  };
+
+  // Formatted meeting count string
+  const meetingCountText =
+    meetings.length === 1 ? '1 meeting' : `${meetings.length} meetings`;
 
   return (
     <div>
+      {/* Page Header */}
       <PageHeader
         title="My Meetings"
-        description="View, browse, and manage all your transcribed and analyzed meetings."
+        description={
+          !loading && meetings.length > 0
+            ? `Your meetings (${meetingCountText})`
+            : 'Your processed meetings, summaries, and action items.'
+        }
         action={
-          <Button
-            variant="primary"
-            icon={<Plus size={16} />}
-            onClick={() => navigate('/')}
-          >
-            New Meeting
-          </Button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={<RefreshCw size={15} className={loading ? 'animate-spin' : ''} />}
+              onClick={handleRefresh}
+              disabled={loading}
+              title="Refresh meeting list"
+              aria-label="Refresh meeting list"
+            >
+              Refresh
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              icon={<Plus size={16} />}
+              onClick={() => navigate('/')}
+            >
+              New Meeting
+            </Button>
+          </div>
         }
       />
 
-      <EmptyState
-        icon={<ListFilter size={28} />}
-        title="No meetings found"
-        description="You haven't uploaded any meeting recordings yet. Upload an audio file to automatically transcribe and analyze it."
-        action={
-          <Button
-            variant="primary"
-            icon={<Plus size={16} />}
-            onClick={() => navigate('/')}
+      {/* Delete Error Inline Alert */}
+      {deleteError && (
+        <div
+          role="alert"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            padding: '0.85rem 1.25rem',
+            marginBottom: '1.5rem',
+            backgroundColor: 'var(--status-error-bg)',
+            border: '1px solid var(--status-error-border)',
+            borderRadius: 'var(--radius-md)',
+            color: 'var(--status-error-text)',
+            fontSize: '0.875rem',
+          }}
+        >
+          <AlertCircle size={18} style={{ flexShrink: 0 }} />
+          <span style={{ flex: 1 }}>{deleteError}</span>
+          <button
+            type="button"
+            onClick={() => setDeleteError(null)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--status-error-text)',
+              cursor: 'pointer',
+              fontWeight: 600,
+              fontSize: '0.8rem',
+            }}
           >
-            Upload Your First Meeting
-          </Button>
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* Loading Skeletons */}
+      {loading && (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
+            gap: '1.5rem',
+          }}
+          aria-label="Loading meetings"
+        >
+          {[1, 2, 3, 4].map((i) => (
+            <Card
+              key={i}
+              padding="lg"
+              style={{
+                height: '260px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                border: '1px solid var(--border)',
+                backgroundColor: 'var(--bg-surface)',
+                opacity: 0.7,
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    height: '20px',
+                    width: '60%',
+                    backgroundColor: 'var(--border)',
+                    borderRadius: 'var(--radius-sm)',
+                    marginBottom: '1rem',
+                  }}
+                />
+                <div
+                  style={{
+                    height: '14px',
+                    width: '40%',
+                    backgroundColor: 'var(--border-subtle)',
+                    borderRadius: 'var(--radius-sm)',
+                    marginBottom: '1.25rem',
+                  }}
+                />
+                <div
+                  style={{
+                    height: '60px',
+                    width: '100%',
+                    backgroundColor: 'var(--bg-canvas)',
+                    borderRadius: 'var(--radius-md)',
+                  }}
+                />
+              </div>
+              <div
+                style={{
+                  height: '24px',
+                  width: '30%',
+                  backgroundColor: 'var(--border-subtle)',
+                  borderRadius: 'var(--radius-sm)',
+                  marginTop: '1rem',
+                }}
+              />
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Error State */}
+      {!loading && error && (
+        <ErrorState
+          title="Couldn't load your meetings"
+          message={error}
+          onRetry={handleRefresh}
+        />
+      )}
+
+      {/* Meeting Collection */}
+      {!loading && !error && (
+        <MeetingList
+          meetings={meetings}
+          onView={handleViewMeeting}
+          onDelete={handleOpenDelete}
+          deletingMeetingId={deleting ? deleteTarget?.id : null}
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDialog
+        isOpen={Boolean(deleteTarget)}
+        title="Delete meeting?"
+        description={
+          deleteTarget
+            ? `Are you sure you want to delete "${deleteTarget.title || 'Untitled Meeting'}"? This action cannot be undone.`
+            : 'Are you sure you want to delete this meeting? This action cannot be undone.'
         }
+        confirmLabel={deleting ? 'Deleting...' : 'Delete Meeting'}
+        cancelLabel="Cancel"
+        variant="danger"
+        loading={deleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
       />
     </div>
   );

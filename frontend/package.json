@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "test": "node --test src/utils/fileValidation.test.ts src/utils/apiError.test.ts src/utils/formatDuration.test.ts src/utils/formatDate.test.ts src/hooks/useMeetingProcessing.test.ts src/components/meeting/MeetingResults.test.ts",
+    "test": "node --test src/utils/fileValidation.test.ts src/utils/apiError.test.ts src/utils/formatDuration.test.ts src/utils/formatDate.test.ts src/hooks/useMeetingProcessing.test.ts src/components/meeting/MeetingResults.test.ts src/components/common/ConfirmDialog.test.ts src/components/meeting/MeetingsData.test.ts",
     "preview": "vite preview"
   },
   "dependencies": {

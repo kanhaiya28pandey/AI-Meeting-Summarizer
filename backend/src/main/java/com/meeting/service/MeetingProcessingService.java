@@ -69,6 +69,10 @@ public class MeetingProcessingService {
             }
 
             // 1. Transition to TRANSCRIBING
+            if (!meetingRepository.existsById(meetingId)) {
+                log.warn("Meeting id={} was deleted during processing. Aborting pipeline.", meetingId);
+                return;
+            }
             meeting.setStatus(MeetingStatus.TRANSCRIBING);
             meeting = meetingRepository.save(meeting);
             log.info("Meeting transcription started: {}", meetingId);
@@ -78,12 +82,21 @@ public class MeetingProcessingService {
             if (transcription == null || transcription.getTranscript() == null || transcription.getTranscript().isBlank()) {
                 throw new IllegalStateException("Transcription service returned empty or invalid transcript");
             }
+
+            if (!meetingRepository.existsById(meetingId)) {
+                log.warn("Meeting id={} was deleted during transcription. Aborting pipeline.", meetingId);
+                return;
+            }
             String transcript = transcription.getTranscript();
             meeting.setTranscript(transcript);
             meeting = meetingRepository.save(meeting);
             log.info("Meeting transcription completed: {}", meetingId);
 
             // 3. Transition to ANALYZING
+            if (!meetingRepository.existsById(meetingId)) {
+                log.warn("Meeting id={} was deleted before analysis. Aborting pipeline.", meetingId);
+                return;
+            }
             meeting.setStatus(MeetingStatus.ANALYZING);
             meeting = meetingRepository.save(meeting);
             log.info("Meeting analysis started: {}", meetingId);
@@ -96,6 +109,10 @@ public class MeetingProcessingService {
             log.info("Meeting analysis completed: {}", meetingId);
 
             // 5. Transition to SAVING
+            if (!meetingRepository.existsById(meetingId)) {
+                log.warn("Meeting id={} was deleted before saving results. Aborting pipeline.", meetingId);
+                return;
+            }
             meeting.setStatus(MeetingStatus.SAVING);
             meeting.setSummary(analysis.getSummary());
             meeting.setKeyDecisions(analysis.getKeyDecisions() != null ? analysis.getKeyDecisions() : new ArrayList<>());
@@ -111,6 +128,10 @@ public class MeetingProcessingService {
             log.info("Meeting saving started: {}", meetingId);
 
             // 6. Transition to COMPLETED
+            if (!meetingRepository.existsById(meetingId)) {
+                log.warn("Meeting id={} was deleted before completion. Aborting pipeline.", meetingId);
+                return;
+            }
             meeting.setStatus(MeetingStatus.COMPLETED);
             meeting = meetingRepository.save(meeting);
 
