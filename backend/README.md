@@ -133,7 +133,56 @@ CREATE DATABASE meeting_summarizer;
 
 ---
 
-### 6. Process Meeting (Phase 5)
+### 6. Upload & Process Meeting (Phase 9 Pipeline)
+* **Method & Path**: `POST /api/meetings/upload`
+* **Content-Type**: `multipart/form-data`
+* **Status**: `201 Created`
+* **Parameters**:
+  * `file`: Audio file binary (`.mp3`, `.wav`, `.m4a`) up to configured max size (default: 100 MB).
+  * `title`: *(Optional)* Meeting title string (defaults to original filename if omitted).
+* **Description**: Synchronously executes the full backend pipeline:
+  1. Validates and saves audio temporarily into local disk buffer (`./temp/uploads`).
+  2. Creates a meeting record in PostgreSQL with status `UPLOADED`.
+  3. Transitions status to `TRANSCRIBING` and dispatches audio to FastAPI (`POST /api/v1/transcription`).
+  4. Saves transcript and transitions status to `ANALYZING`.
+  5. Dispatches transcript to FastAPI (`POST /api/v1/analyze`) for structured intelligence extraction.
+  6. Saves summary, decisions, and action items with status `SAVING`, transitioning to `COMPLETED`.
+  7. Safely deletes temporary audio file on success or failure.
+* **Curl Example**:
+```bash
+curl -X POST http://localhost:8080/api/meetings/upload \
+  -F "title=Weekly Team Meeting" \
+  -F "file=@sample.mp3"
+```
+* **Response (201 Created)**:
+```json
+{
+  "id": "52545fbb-fe1a-4010-ae7e-62fa218b83e5",
+  "title": "Weekly Team Meeting",
+  "originalFileName": "sample.mp3",
+  "fileType": "audio/mpeg",
+  "duration": null,
+  "transcript": "The team decided to launch the dashboard on Friday. Rahul will complete testing by Thursday.",
+  "summary": "The team agreed on releasing the new dashboard on Friday once testing is complete.",
+  "keyDecisions": [
+    "Launch the dashboard on Friday"
+  ],
+  "actionItems": [
+    {
+      "task": "Complete testing",
+      "owner": "Rahul",
+      "deadline": "Thursday"
+    }
+  ],
+  "status": "COMPLETED",
+  "createdAt": "2026-09-11T17:55:00.0000000",
+  "updatedAt": "2026-09-11T17:55:04.0000000"
+}
+```
+
+---
+
+### 7. Process Meeting Acknowledgment (Phase 5)
 * **Method & Path**: `POST /api/meetings/{id}/process`
 * **Status**: `202 Accepted` (or `404 Not Found` if meeting nonexistent, `400 Bad Request` if invalid UUID, `503 Service Unavailable` if AI service down/timed out)
 * **Description**: Verifies the meeting exists in PostgreSQL and triggers processing communication with the FastAPI AI service.
@@ -146,6 +195,7 @@ CREATE DATABASE meeting_summarizer;
   "message": "Meeting processing request accepted"
 }
 ```
+
 
 ---
 

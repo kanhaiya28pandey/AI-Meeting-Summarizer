@@ -14,11 +14,17 @@ public class AiServiceConfig {
     @Value("${ai.service.url:http://localhost:8000}")
     private String aiServiceUrl;
 
+    @Value("${ai.service.connect-timeout:5000}")
+    private int connectTimeoutMillis;
+
+    @Value("${ai.service.read-timeout:300000}")
+    private int readTimeoutMillis;
+
     @Bean
     public RestClient aiServiceRestClient() {
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
-        requestFactory.setConnectTimeout(Duration.ofSeconds(5));
-        requestFactory.setReadTimeout(Duration.ofSeconds(30));
+        requestFactory.setConnectTimeout(Duration.ofMillis(connectTimeoutMillis));
+        requestFactory.setReadTimeout(Duration.ofMillis(readTimeoutMillis));
 
         return RestClient.builder()
                 .baseUrl(aiServiceUrl)

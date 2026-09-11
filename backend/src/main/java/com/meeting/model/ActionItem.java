@@ -1,5 +1,9 @@
 package com.meeting.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.Objects;
@@ -8,15 +12,25 @@ public class ActionItem implements Serializable {
 
     private String task;
     private String owner;
-    private LocalDate deadline;
+    private String deadline;
 
     public ActionItem() {
     }
 
-    public ActionItem(String task, String owner, LocalDate deadline) {
+    public ActionItem(String task, String owner, String deadline) {
         this.task = task;
         this.owner = owner;
         this.deadline = deadline;
+    }
+
+    @JsonCreator
+    public ActionItem(
+            @JsonProperty("task") String task,
+            @JsonProperty("owner") String owner,
+            @JsonProperty("deadline") Object deadline) {
+        this.task = task;
+        this.owner = owner;
+        this.deadline = deadline != null ? deadline.toString() : null;
     }
 
     public String getTask() {
@@ -35,12 +49,28 @@ public class ActionItem implements Serializable {
         this.owner = owner;
     }
 
-    public LocalDate getDeadline() {
+    public Object getDeadline() {
+        if (deadline == null) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(deadline);
+        } catch (Exception e) {
+            return deadline;
+        }
+    }
+
+    @JsonIgnore
+    public String getDeadlineString() {
         return deadline;
     }
 
-    public void setDeadline(LocalDate deadline) {
+    public void setDeadline(String deadline) {
         this.deadline = deadline;
+    }
+
+    public void setDeadline(LocalDate deadline) {
+        this.deadline = deadline != null ? deadline.toString() : null;
     }
 
     @Override
@@ -50,12 +80,12 @@ public class ActionItem implements Serializable {
         ActionItem that = (ActionItem) o;
         return Objects.equals(task, that.task) &&
                 Objects.equals(owner, that.owner) &&
-                Objects.equals(deadline, that.deadline);
+                Objects.equals(getDeadline(), that.getDeadline());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(task, owner, deadline);
+        return Objects.hash(task, owner, getDeadline());
     }
 
     @Override
