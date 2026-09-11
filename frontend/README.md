@@ -24,13 +24,15 @@ frontend/
 ├── src/
 │   ├── assets/                 # Static media and graphics
 │   ├── components/
-│   │   ├── common/             # Common domain components (UploadCard, FileDropZone, UploadProgress, ErrorBoundary)
+│   │   ├── common/             # Domain components (UploadCard, FileDropZone, UploadProgress, ProcessingStatus, ErrorBoundary)
 │   │   ├── layout/             # Application layout (AppLayout, Sidebar, Header)
 │   │   └── ui/                 # Atomic UI primitives (Button, Card, Badge, PageHeader, EmptyState, LoadingState, ErrorState)
+│   ├── hooks/
+│   │   └── useMeetingProcessing.ts # Polling hook monitoring real backend stages
 │   ├── pages/                  # Page route views
 │   │   ├── Home.tsx            # Hero, UploadCard, 4-step workflow guide
 │   │   ├── Meetings.tsx        # My Meetings list / empty state
-│   │   ├── MeetingDetails.tsx  # Dynamic route /meetings/:id
+│   │   ├── MeetingDetails.tsx  # Dynamic route /meetings/:id with real-time processing timeline
 │   │   ├── Settings.tsx        # System parameters & service configurations
 │   │   └── NotFound.tsx        # 404 error page
 │   ├── services/
@@ -41,7 +43,8 @@ frontend/
 │   ├── utils/
 │   │   ├── apiError.ts         # Friendly error messages for network/HTTP failures
 │   │   ├── fileValidation.ts   # Audio file and meeting title validation
-│   │   └── formatFileSize.ts   # Human-readable file size formatter
+│   │   ├── formatFileSize.ts   # Human-readable file size formatter
+│   │   └── processingStages.ts # Centralized stage definitions and helper predicates
 │   ├── App.css
 │   ├── App.tsx                 # Root router definition
 │   ├── index.css               # Global CSS variables, reset, and typography
@@ -54,18 +57,21 @@ frontend/
 
 ---
 
-## 3. Uploading a Meeting
+## 3. Real-time Meeting Processing Experience (Phase 12)
 
-The application provides a real upload workflow on the Home page:
+After submitting an audio recording on the Home page:
 
-- **Supported Formats:** `MP3`, `WAV`, `M4A`
-- **Maximum File Size:** 100 MB (`MAX_AUDIO_FILE_SIZE_BYTES = 100 * 1024 * 1024`)
-- **Title Requirements:** Required, 1–200 characters (trimmed)
-- **Drag & Drop:** Fully accessible drag-and-drop zone with keyboard navigation and click-to-browse file selection.
-- **Upload Progress:** Genuine browser-to-server progress tracking via native `XMLHttpRequest.upload.onprogress`.
-
-> [!NOTE]
-> In the Phase 9 backend MVP, `POST /api/meetings/upload` processes audio synchronously (running Gemini transcription, Gemini intelligence analysis, and PostgreSQL persistence before returning `201 Created`). While the server completes processing, the UI displays a clear processing notice until the created `Meeting` response arrives, then smoothly navigates to `/meetings/:id`. Detailed step-by-step processing-state visualization will be added in Phase 12.
+1. **Immediate `202 Accepted`**: The backend returns HTTP `202` with the newly created meeting ID (`status = UPLOADED`).
+2. **Instant Navigation**: The browser transitions immediately to `/meetings/:id`.
+3. **Status Polling**: The custom hook `useMeetingProcessing` polls `GET /api/meetings/:id` every 2000 ms.
+4. **Authentic Stages**: The UI displays the authentic backend stage progression:
+   - `UPLOADED` — Upload received and queued.
+   - `TRANSCRIBING` — Gemini 3.5 audio-to-text transcription.
+   - `ANALYZING` — Gemini meeting analysis for summary, decisions, and action items.
+   - `SAVING` — Persisting structured data to PostgreSQL.
+   - `COMPLETED` — Meeting results ready!
+5. **Terminal State Handling**: Polling stops immediately upon reaching `COMPLETED` or `FAILED`.
+6. **Browser Refresh Support**: Refreshing `/meetings/:id` at any stage queries the current state and seamlessly resumes polling if still in-flight.
 
 ---
 

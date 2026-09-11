@@ -3,8 +3,8 @@ package com.meeting.controller;
 import com.meeting.dto.AiProcessResponse;
 import com.meeting.dto.CreateMeetingRequest;
 import com.meeting.dto.MeetingResponse;
-import com.meeting.service.MeetingProcessingService;
 import com.meeting.service.MeetingService;
+import com.meeting.service.MeetingUploadService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -28,11 +28,11 @@ import java.util.UUID;
 public class MeetingController {
 
     private final MeetingService meetingService;
-    private final MeetingProcessingService meetingProcessingService;
+    private final MeetingUploadService meetingUploadService;
 
-    public MeetingController(MeetingService meetingService, MeetingProcessingService meetingProcessingService) {
+    public MeetingController(MeetingService meetingService, MeetingUploadService meetingUploadService) {
         this.meetingService = meetingService;
-        this.meetingProcessingService = meetingProcessingService;
+        this.meetingUploadService = meetingUploadService;
     }
 
     @PostMapping
@@ -46,9 +46,9 @@ public class MeetingController {
     public ResponseEntity<MeetingResponse> uploadMeeting(
             @RequestParam(value = "title", required = false) String title,
             @RequestParam("file") MultipartFile file) throws Exception {
-        MeetingResponse response = meetingProcessingService.processMeeting(title, file);
+        MeetingResponse response = meetingUploadService.uploadAndQueueMeeting(title, file);
         URI location = URI.create("/api/meetings/" + response.getId());
-        return ResponseEntity.created(location).body(response);
+        return ResponseEntity.status(HttpStatus.ACCEPTED).location(location).body(response);
     }
 
     @GetMapping

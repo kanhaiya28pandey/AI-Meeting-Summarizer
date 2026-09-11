@@ -66,9 +66,17 @@ public class MeetingService {
     }
 
     public AiProcessResponse processMeeting(UUID id) {
-        if (!meetingRepository.existsById(id)) {
-            throw new MeetingNotFoundException(id);
+        Meeting meeting = meetingRepository.findById(id)
+                .orElseThrow(() -> new MeetingNotFoundException(id));
+        if (meeting.getStatus() == MeetingStatus.COMPLETED) {
+            return new AiProcessResponse(true, id, "AI Meeting Summarizer", "Meeting has already completed processing");
+        }
+        if (meeting.getStatus() == MeetingStatus.TRANSCRIBING ||
+            meeting.getStatus() == MeetingStatus.ANALYZING ||
+            meeting.getStatus() == MeetingStatus.SAVING) {
+            return new AiProcessResponse(true, id, "AI Meeting Summarizer", "Meeting is currently being processed");
         }
         return aiServiceClient.triggerProcessing(id);
     }
 }
+

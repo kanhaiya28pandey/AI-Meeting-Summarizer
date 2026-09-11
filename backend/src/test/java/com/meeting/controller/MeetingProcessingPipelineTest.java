@@ -1,6 +1,7 @@
 package com.meeting.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.meeting.dto.MeetingResponse;
 import com.meeting.dto.ai.AiActionItem;
 import com.meeting.dto.ai.AiAnalysisResponse;
 import com.meeting.dto.ai.AiTranscriptionResponse;
@@ -20,15 +21,16 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -69,8 +71,23 @@ class MeetingProcessingPipelineTest {
         meetingRepository.deleteAll();
     }
 
+    private Meeting waitForTerminalStatus(UUID id, long timeoutMs) throws InterruptedException {
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        while (System.currentTimeMillis() < deadline) {
+            Optional<Meeting> opt = meetingRepository.findById(id);
+            if (opt.isPresent()) {
+                MeetingStatus currentStatus = opt.get().getStatus();
+                if (currentStatus == MeetingStatus.COMPLETED || currentStatus == MeetingStatus.FAILED) {
+                    return opt.get();
+                }
+            }
+            Thread.sleep(50);
+        }
+        return meetingRepository.findById(id).orElseThrow();
+    }
+
     @Test
-    void test1_successfulPipeline_shouldReturn201AndPersistCompletedMeeting() throws Exception {
+    void test1_successfulPipeline_shouldReturn202AndPersistCompletedMeeting() throws Exception {
         MockMultipartFile audioFile = new MockMultipartFile(
                 "file",
                 "meeting.mp3",
@@ -91,29 +108,23 @@ class MeetingProcessingPipelineTest {
                 )
         );
 
-        mockMvc.perform(multipart("/api/meetings/upload")
+        MvcResult result = mockMvc.perform(multipart("/api/meetings/upload")
                         .file(audioFile)
                         .param("title", "Weekly Team Meeting"))
-                .andExpect(status().isCreated())
+                .andExpect(status().isAccepted())
                 .andExpect(header().string("Location", containsString("/api/meetings/")))
                 .andExpect(jsonPath("$.id", notNullValue()))
                 .andExpect(jsonPath("$.title", is("Weekly Team Meeting")))
                 .andExpect(jsonPath("$.originalFileName", is("meeting.mp3")))
                 .andExpect(jsonPath("$.fileType", is("audio/mpeg")))
-                .andExpect(jsonPath("$.status", is("COMPLETED")))
-                .andExpect(jsonPath("$.transcript", is(sampleTranscript)))
-                .andExpect(jsonPath("$.summary", is("The team agreed to launch Friday after testing.")))
-                .andExpect(jsonPath("$.keyDecisions", hasSize(1)))
-                .andExpect(jsonPath("$.keyDecisions[0]", is("Launch on Friday")))
-                .andExpect(jsonPath("$.actionItems", hasSize(1)))
-                .andExpect(jsonPath("$.actionItems[0].task", is("Complete testing")))
-                .andExpect(jsonPath("$.actionItems[0].owner", is("Rahul")))
-                .andExpect(jsonPath("$.actionItems[0].deadline", is("Thursday")));
+                .andExpect(jsonPath("$.status", is("UPLOADED")))
+                .andReturn();
 
-        // Verify in PostgreSQL database
-        List<Meeting> meetings = meetingRepository.findAll();
-        assertEquals(1, meetings.size());
-        Meeting persisted = meetings.get(0);
+        MeetingResponse response = objectMapper.readValue(result.getResponse().getContentAsString(), MeetingResponse.class);
+        UUID meetingId = response.getId();
+
+        // Wait for background processing to reach COMPLETED
+        Meeting persisted = waitForTerminalStatus(meetingId, 5000);
         assertEquals(MeetingStatus.COMPLETED, persisted.getStatus());
         assertEquals("Weekly Team Meeting", persisted.getTitle());
         assertEquals(sampleTranscript, persisted.getTranscript());
@@ -144,21 +155,23 @@ class MeetingProcessingPipelineTest {
                 new AiServiceException("The AI service transcription returned an error: 503")
         );
 
-        mockMvc.perform(multipart("/api/meetings/upload")
+        MvcResult result = mockMvc.perform(multipart("/api/meetings/upload")
                         .file(audioFile)
                         .param("title", "Planning Sync"))
-                .andExpect(status().isServiceUnavailable());
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.status", is("UPLOADED")))
+                .andReturn();
 
-        // Verify analysis was not invoked
-        verify(aiServiceClient, never()).analyze(anyString());
+        MeetingResponse response = objectMapper.readValue(result.getResponse().getContentAsString(), MeetingResponse.class);
+        UUID meetingId = response.getId();
 
-        // Verify meeting remains in PostgreSQL with FAILED status
-        List<Meeting> meetings = meetingRepository.findAll();
-        assertEquals(1, meetings.size());
-        Meeting failedMeeting = meetings.get(0);
+        Meeting failedMeeting = waitForTerminalStatus(meetingId, 5000);
         assertEquals(MeetingStatus.FAILED, failedMeeting.getStatus());
         assertNull(failedMeeting.getTranscript());
         assertNull(failedMeeting.getSummary());
+
+        // Verify analysis was not invoked
+        verify(aiServiceClient, never()).analyze(anyString());
 
         // Verify temp directory cleanup
         File tempFolder = Paths.get(tempUploadDir).toFile();
@@ -175,19 +188,22 @@ class MeetingProcessingPipelineTest {
                 "silent audio data".getBytes()
         );
 
-        when(aiServiceClient.transcribe(any(Path.class), anyString())).thenThrow(
-                new AiServiceException("AI service returned an empty or unsuccessful transcript")
+        when(aiServiceClient.transcribe(any(Path.class), anyString())).thenReturn(
+                new AiTranscriptionResponse(true, "", "en", List.of())
         );
 
-        mockMvc.perform(multipart("/api/meetings/upload")
+        MvcResult result = mockMvc.perform(multipart("/api/meetings/upload")
                         .file(audioFile))
-                .andExpect(status().isServiceUnavailable());
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.status", is("UPLOADED")))
+                .andReturn();
 
+        MeetingResponse response = objectMapper.readValue(result.getResponse().getContentAsString(), MeetingResponse.class);
+        UUID meetingId = response.getId();
+
+        Meeting failedMeeting = waitForTerminalStatus(meetingId, 5000);
+        assertEquals(MeetingStatus.FAILED, failedMeeting.getStatus());
         verify(aiServiceClient, never()).analyze(anyString());
-
-        List<Meeting> meetings = meetingRepository.findAll();
-        assertEquals(1, meetings.size());
-        assertEquals(MeetingStatus.FAILED, meetings.get(0).getStatus());
     }
 
     @Test
@@ -208,15 +224,17 @@ class MeetingProcessingPipelineTest {
                 new AiServiceException("The AI service analysis is currently unavailable or timed out")
         );
 
-        mockMvc.perform(multipart("/api/meetings/upload")
+        MvcResult result = mockMvc.perform(multipart("/api/meetings/upload")
                         .file(audioFile)
                         .param("title", "Quarterly Planning"))
-                .andExpect(status().isServiceUnavailable());
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.status", is("UPLOADED")))
+                .andReturn();
 
-        // Verify meeting has status FAILED, but transcript is preserved
-        List<Meeting> meetings = meetingRepository.findAll();
-        assertEquals(1, meetings.size());
-        Meeting persisted = meetings.get(0);
+        MeetingResponse response = objectMapper.readValue(result.getResponse().getContentAsString(), MeetingResponse.class);
+        UUID meetingId = response.getId();
+
+        Meeting persisted = waitForTerminalStatus(meetingId, 5000);
         assertEquals(MeetingStatus.FAILED, persisted.getStatus());
         assertEquals(validTranscript, persisted.getTranscript());
         assertNull(persisted.getSummary());
@@ -286,16 +304,19 @@ class MeetingProcessingPipelineTest {
                 )
         );
 
-        mockMvc.perform(multipart("/api/meetings/upload")
+        MvcResult result = mockMvc.perform(multipart("/api/meetings/upload")
                         .file(audioFile))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.actionItems[0].task", is("Review deployment logs")))
-                .andExpect(jsonPath("$.actionItems[0].owner").doesNotExist())
-                .andExpect(jsonPath("$.actionItems[0].deadline").doesNotExist());
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.status", is("UPLOADED")))
+                .andReturn();
 
-        List<Meeting> meetings = meetingRepository.findAll();
-        assertEquals(1, meetings.size());
-        ActionItem item = meetings.get(0).getActionItems().get(0);
+        MeetingResponse response = objectMapper.readValue(result.getResponse().getContentAsString(), MeetingResponse.class);
+        UUID meetingId = response.getId();
+
+        Meeting persisted = waitForTerminalStatus(meetingId, 5000);
+        assertEquals(MeetingStatus.COMPLETED, persisted.getStatus());
+        assertEquals(1, persisted.getActionItems().size());
+        ActionItem item = persisted.getActionItems().get(0);
         assertEquals("Review deployment logs", item.getTask());
         assertNull(item.getOwner());
         assertNull(item.getDeadline());

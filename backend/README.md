@@ -1,6 +1,6 @@
 # AI Meeting Summarizer — Backend
 
-Spring Boot REST API gateway, business logic, and persistence layer for the AI Meeting Summarizer platform.
+Spring Boot REST API gateway, business logic, asynchronous meeting pipeline, and persistence layer for the AI Meeting Summarizer platform.
 
 ## Technology Stack
 * **Java**: 21+
@@ -8,8 +8,9 @@ Spring Boot REST API gateway, business logic, and persistence layer for the AI M
 * **Build Tool**: Maven / Maven Wrapper (`mvnw` / `mvnw.cmd`)
 * **Persistence**: Spring Data JPA & Hibernate 7
 * **Database**: PostgreSQL 18+ (with native JSONB support)
+* **Concurrency**: Spring `@EnableAsync` with bounded `ThreadPoolTaskExecutor`
 
-## Database Configuration
+## Database & Asynchronous Concurrency Configuration
 The backend connects to PostgreSQL using standard environment variables with configurable defaults:
 
 | Variable | Description | Default |
@@ -18,6 +19,10 @@ The backend connects to PostgreSQL using standard environment variables with con
 | `DB_USERNAME` | Database username | `postgres` |
 | `DB_PASSWORD` | Database password | `postgres` |
 | `AI_SERVICE_URL` | FastAPI AI Service URL | `http://localhost:8000` |
+| `FRONTEND_URL` | Allowed CORS frontend origin | `http://localhost:5173` |
+| `MEETING_PROCESSING_CORE_POOL_SIZE` | Background thread pool core size | `2` |
+| `MEETING_PROCESSING_MAX_POOL_SIZE` | Background thread pool maximum size | `4` |
+| `MEETING_PROCESSING_QUEUE_CAPACITY` | Background task queue capacity | `20` |
 
 > [!NOTE]
 > Never hardcode or commit real credentials to Git. Export `DB_PASSWORD` in your local environment or pass it at runtime.
@@ -104,9 +109,10 @@ CREATE DATABASE meeting_summarizer;
 
 ---
 
-### 4. Get Meeting by ID
+### 4. Get Meeting by ID (Status Source of Truth)
 * **Method & Path**: `GET /api/meetings/{id}`
 * **Status**: `200 OK` (or `404 Not Found` if nonexistent, `400 Bad Request` if invalid UUID)
+* **Description**: Primary endpoint used by the frontend to monitor processing lifecycle states.
 * **Response (200 OK)**:
 ```json
 {
@@ -115,13 +121,13 @@ CREATE DATABASE meeting_summarizer;
   "originalFileName": "sprint-planning.mp3",
   "fileType": "audio/mpeg",
   "duration": 3600,
-  "transcript": null,
-  "summary": null,
+  "transcript": "...",
+  "summary": "...",
   "keyDecisions": [],
   "actionItems": [],
-  "status": "UPLOADED",
+  "status": "TRANSCRIBING",
   "createdAt": "2026-09-11T16:53:55.1782861",
-  "updatedAt": "2026-09-11T16:53:55.1782861"
+  "updatedAt": "2026-09-11T16:53:57.1782861"
 }
 ```
 
@@ -133,28 +139,33 @@ CREATE DATABASE meeting_summarizer;
 
 ---
 
-### 6. Upload & Process Meeting (Phase 9 Pipeline)
+### 6. Upload & Asynchronously Process Meeting (Phase 12 Pipeline)
 * **Method & Path**: `POST /api/meetings/upload`
 * **Content-Type**: `multipart/form-data`
-* **Status**: `201 Created`
+* **Status**: `202 Accepted`
+* **Header**: `Location: /api/meetings/{id}`
 * **Parameters**:
   * `file`: Audio file binary (`.mp3`, `.wav`, `.m4a`) up to configured max size (default: 100 MB).
   * `title`: *(Optional)* Meeting title string (defaults to original filename if omitted).
-* **Description**: Synchronously executes the full backend pipeline:
+* **Description**: Asynchronously initiates the processing pipeline:
   1. Validates and saves audio temporarily into local disk buffer (`./temp/uploads`).
   2. Creates a meeting record in PostgreSQL with status `UPLOADED`.
-  3. Transitions status to `TRANSCRIBING` and dispatches audio to FastAPI (`POST /api/v1/transcription`).
-  4. Saves transcript and transitions status to `ANALYZING`.
-  5. Dispatches transcript to FastAPI (`POST /api/v1/analyze`) for structured intelligence extraction.
-  6. Saves summary, decisions, and action items with status `SAVING`, transitioning to `COMPLETED`.
-  7. Safely deletes temporary audio file on success or failure.
+  3. Enqueues processing task into dedicated bounded `ThreadPoolTaskExecutor`.
+  4. Immediately returns `202 Accepted` with meeting ID.
+  5. Background thread sequentially executes:
+     - `TRANSCRIBING`: Calls FastAPI transcription (`POST /api/v1/transcription`) and persists transcript.
+     - `ANALYZING`: Calls FastAPI analysis (`POST /api/v1/analyze`) for structured intelligence.
+     - `SAVING`: Persists summary, decisions, and action items.
+     - `COMPLETED`: Marks meeting completed.
+     - On error at any point: Marks meeting `FAILED` (preserving partial transcript if generated).
+     - Always cleans up temporary audio file in `finally`.
 * **Curl Example**:
 ```bash
 curl -X POST http://localhost:8080/api/meetings/upload \
   -F "title=Weekly Team Meeting" \
   -F "file=@sample.mp3"
 ```
-* **Response (201 Created)**:
+* **Response (202 Accepted)**:
 ```json
 {
   "id": "52545fbb-fe1a-4010-ae7e-62fa218b83e5",
@@ -162,83 +173,25 @@ curl -X POST http://localhost:8080/api/meetings/upload \
   "originalFileName": "sample.mp3",
   "fileType": "audio/mpeg",
   "duration": null,
-  "transcript": "The team decided to launch the dashboard on Friday. Rahul will complete testing by Thursday.",
-  "summary": "The team agreed on releasing the new dashboard on Friday once testing is complete.",
-  "keyDecisions": [
-    "Launch the dashboard on Friday"
-  ],
-  "actionItems": [
-    {
-      "task": "Complete testing",
-      "owner": "Rahul",
-      "deadline": "Thursday"
-    }
-  ],
-  "status": "COMPLETED",
+  "transcript": null,
+  "summary": null,
+  "keyDecisions": [],
+  "actionItems": [],
+  "status": "UPLOADED",
   "createdAt": "2026-09-11T17:55:00.0000000",
-  "updatedAt": "2026-09-11T17:55:04.0000000"
+  "updatedAt": "2026-09-11T17:55:00.0000000"
 }
 ```
+
+> [!IMPORTANT]
+> **Asynchronous Execution Limitation:** Background task processing is currently managed by an in-memory `ThreadPoolTaskExecutor` suitable for MVP. If the Spring Boot application server is stopped or restarts while a meeting task is in-flight, that job is interrupted. Persistent job queues (such as Redis, RabbitMQ, or database polling) are planned for later reliability phases.
 
 ---
 
 ### 7. Process Meeting Acknowledgment (Phase 5)
 * **Method & Path**: `POST /api/meetings/{id}/process`
-* **Status**: `202 Accepted` (or `404 Not Found` if meeting nonexistent, `400 Bad Request` if invalid UUID, `503 Service Unavailable` if AI service down/timed out)
-* **Description**: Verifies the meeting exists in PostgreSQL and triggers processing communication with the FastAPI AI service.
-* **Response (202 Accepted)**:
-```json
-{
-  "success": true,
-  "meetingId": "52545fbb-fe1a-4010-ae7e-62fa218b83e5",
-  "service": "AI Meeting Summarizer AI Service",
-  "message": "Meeting processing request accepted"
-}
-```
-
-
----
-
-### 7. Error Response Formats
-
-#### Validation Error (`400 Bad Request`)
-```json
-{
-  "timestamp": "2026-09-11T16:53:55.5205328",
-  "status": 400,
-  "error": "Validation Failed",
-  "message": "Request validation failed",
-  "path": "/api/meetings",
-  "fieldErrors": {
-    "title": "Title is required",
-    "originalFileName": "Original file name is required",
-    "fileType": "File type is required",
-    "duration": "Duration must be zero or greater"
-  }
-}
-```
-
-#### Not Found Error (`404 Not Found`)
-```json
-{
-  "timestamp": "2026-09-11T16:53:55.5108354",
-  "status": 404,
-  "error": "Not Found",
-  "message": "Meeting not found with ID: 52545fbb-fe1a-4010-ae7e-62fa218b83e5",
-  "path": "/api/meetings/52545fbb-fe1a-4010-ae7e-62fa218b83e5"
-}
-```
-
-#### Service Unavailable Error (`503 Service Unavailable`)
-```json
-{
-  "timestamp": "2026-09-11T17:25:00.0000000",
-  "status": 503,
-  "error": "AI Service Unavailable",
-  "message": "The AI service is currently unavailable or timed out",
-  "path": "/api/meetings/52545fbb-fe1a-4010-ae7e-62fa218b83e5/process"
-}
-```
+* **Status**: `202 Accepted`
+* **Description**: Protected against duplicate triggers if meeting is already completed or actively in progress.
 
 ---
 
