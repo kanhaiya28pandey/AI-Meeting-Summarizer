@@ -69,6 +69,24 @@ class MeetingProcessingPipelineTest {
     @BeforeEach
     void cleanDatabase() {
         meetingRepository.deleteAll();
+        cleanTempUploads();
+    }
+
+    @org.junit.jupiter.api.AfterEach
+    void cleanUp() {
+        cleanTempUploads();
+    }
+
+    private void cleanTempUploads() {
+        File tempFolder = Paths.get(tempUploadDir).toFile();
+        if (tempFolder.exists() && tempFolder.isDirectory()) {
+            File[] files = tempFolder.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    f.delete();
+                }
+            }
+        }
     }
 
     private Meeting waitForTerminalStatus(UUID id, long timeoutMs) throws InterruptedException {
@@ -258,7 +276,7 @@ class MeetingProcessingPipelineTest {
                         .file(pdfFile))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error", is("Bad Request")))
-                .andExpect(jsonPath("$.message", containsString("Unsupported audio format")));
+                .andExpect(jsonPath("$.message", containsString("Unsupported media format")));
 
         verify(aiServiceClient, never()).transcribe(any(), any());
         assertEquals(0, meetingRepository.count());
@@ -320,5 +338,66 @@ class MeetingProcessingPipelineTest {
         assertEquals("Review deployment logs", item.getTask());
         assertNull(item.getOwner());
         assertNull(item.getDeadline());
+    }
+
+    @Test
+    void test8_videoMp4Upload_shouldReturn202AndCompletePipeline() throws Exception {
+        MockMultipartFile videoFile = new MockMultipartFile(
+                "file",
+                "quarterly-review.mp4",
+                "video/mp4",
+                "fake mp4 video binary content".getBytes()
+        );
+
+        String sampleTranscript = "Quarterly review went well. Marketing will follow up next Monday.";
+        when(aiServiceClient.transcribe(any(Path.class), anyString())).thenReturn(
+                new AiTranscriptionResponse(true, sampleTranscript, "en", List.of())
+        );
+
+        when(aiServiceClient.analyze(sampleTranscript)).thenReturn(
+                new AiAnalysisResponse(
+                        "Quarterly review completed successfully.",
+                        List.of("Continue current strategy"),
+                        List.of(new AiActionItem("Follow up", "Marketing", "Monday"))
+                )
+        );
+
+        MvcResult result = mockMvc.perform(multipart("/api/meetings/upload")
+                        .file(videoFile)
+                        .param("title", "Quarterly Review Video"))
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.id", notNullValue()))
+                .andExpect(jsonPath("$.title", is("Quarterly Review Video")))
+                .andExpect(jsonPath("$.originalFileName", is("quarterly-review.mp4")))
+                .andExpect(jsonPath("$.fileType", is("video/mp4")))
+                .andExpect(jsonPath("$.status", is("UPLOADED")))
+                .andReturn();
+
+        MeetingResponse response = objectMapper.readValue(result.getResponse().getContentAsString(), MeetingResponse.class);
+        UUID meetingId = response.getId();
+
+        Meeting persisted = waitForTerminalStatus(meetingId, 5000);
+        assertEquals(MeetingStatus.COMPLETED, persisted.getStatus());
+        assertEquals("Quarterly Review Video", persisted.getTitle());
+        assertEquals("video/mp4", persisted.getFileType());
+        assertEquals(sampleTranscript, persisted.getTranscript());
+        assertEquals("Quarterly review completed successfully.", persisted.getSummary());
+    }
+
+    @Test
+    void test9_unsupportedAviVideo_shouldReturn400() throws Exception {
+        MockMultipartFile aviFile = new MockMultipartFile(
+                "file",
+                "video.avi",
+                "video/x-msvideo",
+                "avi data".getBytes()
+        );
+
+        mockMvc.perform(multipart("/api/meetings/upload")
+                        .file(aviFile))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("Unsupported media format")));
+
+        verify(aiServiceClient, never()).transcribe(any(), any());
     }
 }

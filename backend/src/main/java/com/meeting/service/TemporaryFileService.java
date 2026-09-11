@@ -20,7 +20,7 @@ public class TemporaryFileService {
 
     private static final Logger log = LoggerFactory.getLogger(TemporaryFileService.class);
 
-    private static final Set<String> SUPPORTED_EXTENSIONS = Set.of(".mp3", ".wav", ".m4a");
+    private static final Set<String> SUPPORTED_EXTENSIONS = Set.of(".mp3", ".wav", ".m4a", ".mp4", ".mov");
     private static final Set<String> SUPPORTED_MIME_TYPES = Set.of(
             "audio/mpeg",
             "audio/mp3",
@@ -29,7 +29,10 @@ public class TemporaryFileService {
             "audio/wave",
             "audio/mp4",
             "audio/m4a",
-            "audio/x-m4a"
+            "audio/x-m4a",
+            "video/mp4",
+            "video/quicktime",
+            "video/x-m4v"
     );
 
     private final Path tempDir;
@@ -46,7 +49,7 @@ public class TemporaryFileService {
 
     public void validateAudioFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("Uploaded audio file cannot be empty");
+            throw new IllegalArgumentException("Uploaded file cannot be empty");
         }
 
         String originalFilename = file.getOriginalFilename();
@@ -57,7 +60,7 @@ public class TemporaryFileService {
         String extension = getExtension(originalFilename).toLowerCase();
         if (!SUPPORTED_EXTENSIONS.contains(extension)) {
             throw new IllegalArgumentException(
-                    String.format("Unsupported audio format '%s'. Supported formats: MP3, WAV, M4A", extension)
+                    String.format("Unsupported media format '%s'. Supported formats: MP3, WAV, M4A, MP4, MOV", extension)
             );
         }
 
@@ -66,7 +69,7 @@ public class TemporaryFileService {
             String normalizedMime = contentType.toLowerCase().split(";")[0].trim();
             if (!SUPPORTED_MIME_TYPES.contains(normalizedMime) && !normalizedMime.equals("application/octet-stream")) {
                 throw new IllegalArgumentException(
-                        String.format("Unsupported audio MIME type '%s'. Supported formats: MP3, WAV, M4A", contentType)
+                        String.format("Unsupported media MIME type '%s'. Supported formats: MP3, WAV, M4A, MP4, MOV", contentType)
                 );
             }
         }

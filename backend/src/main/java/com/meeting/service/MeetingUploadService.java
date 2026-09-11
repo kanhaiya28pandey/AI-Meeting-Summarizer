@@ -48,7 +48,24 @@ public class MeetingUploadService {
         Meeting meeting = new Meeting();
         meeting.setTitle(effectiveTitle);
         meeting.setOriginalFileName(originalFilename);
-        meeting.setFileType(file.getContentType() != null ? file.getContentType() : "audio/mpeg");
+        String contentType = file.getContentType();
+        String extension = TemporaryFileService.getExtension(originalFilename).toLowerCase();
+        String effectiveFileType;
+        if (contentType != null && !contentType.isBlank() && !contentType.equalsIgnoreCase("application/octet-stream")) {
+            effectiveFileType = contentType.toLowerCase().split(";")[0].trim();
+        } else if (extension.equals(".mp4")) {
+            effectiveFileType = "video/mp4";
+        } else if (extension.equals(".mov")) {
+            effectiveFileType = "video/quicktime";
+        } else if (extension.equals(".wav")) {
+            effectiveFileType = "audio/wav";
+        } else if (extension.equals(".m4a")) {
+            effectiveFileType = "audio/mp4";
+        } else {
+            effectiveFileType = "audio/mpeg";
+        }
+
+        meeting.setFileType(effectiveFileType);
         meeting.setStatus(MeetingStatus.UPLOADED);
         meeting.setKeyDecisions(new ArrayList<>());
         meeting.setActionItems(new ArrayList<>());

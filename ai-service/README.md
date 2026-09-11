@@ -129,12 +129,12 @@ The service will start on `http://localhost:8000`.
 > [!IMPORTANT]
 > **Zero-Hallucination Prompting**: Gemini is strictly instructed to only extract information explicitly stated in the input text. If an owner or deadline is unmentioned, they are returned as `null`. If no decisions or action items exist, empty arrays `[]` are returned.
 
-### 4. Audio Transcription Endpoint (Phase 7)
+### 4. Audio & Video Media Transcription Endpoint (Phase 7 & Phase 15)
 * **Method & Path**: `POST /api/v1/transcription`
-* **Status**: `200 OK` (or `400 Bad Request` for empty/corrupted files, `422 Unprocessable Entity` for unsupported formats, `503 Service Unavailable` for downstream AI service errors)
-* **Description**: Accepts multipart audio upload (`MP3`, `WAV`, `M4A`), uploads to Gemini via Files API, transcribes using `gemini-3.5-transcribe` with verbatim transcription, speaker diarization, and word timestamps, and securely cleans up local and remote temporary files.
+* **Status**: `200 OK` (or `400 Bad Request` for empty/corrupted/no-audio files, `422 Unprocessable Entity` for unsupported formats, `503 Service Unavailable` for downstream AI or FFmpeg errors)
+* **Description**: Accepts multipart audio or video uploads (`MP3`, `WAV`, `M4A`, `MP4`, `MOV`). For video files (`MP4`, `MOV`), extracts the audio track using FFmpeg as a temporary WAV file, uploads to Gemini via Files API, transcribes using `gemini-3.5-transcribe` with verbatim transcription, speaker diarization, and word timestamps, and securely cleans up all temporary local and remote files.
 * **Form-Data**:
-  * `file`: Audio file binary (`.mp3`, `.wav`, `.m4a`) up to configured max size (default: 100 MB).
+  * `file`: Audio or video file binary (`.mp3`, `.wav`, `.m4a`, `.mp4`, `.mov`) up to configured max size (default: 100 MB).
 * **Response Body**:
 ```json
 {
@@ -201,14 +201,19 @@ http://localhost:8000/redoc
 
 ---
 
-## Gemini Integration Details
+## Gemini & FFmpeg Integration Details
 
 * **SDK**: `google-genai` (current official Python SDK)
 * **Text & Transcript Analysis Model**: Configurable via `GEMINI_MODEL` (default: `gemini-2.5-flash`)
 * **Audio Transcription Model**: Configurable via `GEMINI_TRANSCRIPTION_MODEL` (default: `gemini-3.5-transcribe`)
+* **Video & Audio Processing**:
+  * Audio formats: `MP3`, `WAV`, `M4A` (processed directly)
+  * Video formats: `MP4`, `MOV` (audio track extracted via FFmpeg to 16kHz mono WAV)
+  * Max Upload Size: 100 MB
+  * FFmpeg configuration: `FFMPEG_PATH`, `FFMPEG_TIMEOUT_SECONDS` (default: 600)
+  * Guaranteed cleanup of temporary files in `temp/audio` and `temp/video`
 * **Max Transcript Length**: Configurable via `MAX_TRANSCRIPT_LENGTH` (default: 100,000 characters)
 * **API Key**: Loaded strictly from `GEMINI_API_KEY` environment variable. Never hardcoded or committed.
-* **Audio Processing**: Streamed chunk-based upload into `./temp/audio`, verified for size and MIME integrity, uploaded to Gemini Files API, and deleted immediately after generation completes.
 * **Structured Output**: Native `types.GenerateContentConfig(response_mime_type="application/json", response_schema=MeetingAnalysisResponse, temperature=0.2)` with two-tier Pydantic validation.
 
 ---
@@ -221,14 +226,13 @@ pytest
 
 ---
 
-## Current Status & Limitations (Phase 8)
+## Current Status (Phase 15)
 * **Microservice Foundation**: Operational & tested
 * **Health Check & Docs**: Operational & verified (Health check is independent of external Gemini calls)
 * **Spring Boot Integration**: Operational (`POST /api/v1/process` acknowledges with `202 Accepted`)
 * **Gemini Text Intelligence**: Operational (`POST /api/v1/gemini/test` extracts structured summary, decisions, actions)
-* **Audio Transcription**: Operational (`POST /api/v1/transcription` via `gemini-3.5-transcribe` Files API)
+* **Audio & Video Transcription**: Operational (`POST /api/v1/transcription` via FFmpeg audio extraction & `gemini-3.5-transcribe` Files API)
 * **Meeting Transcript Analysis**: Operational (`POST /api/v1/analyze` via `gemini-2.5-flash` structured extraction)
-* **End-to-End Orchestration**: Not implemented (scheduled for Phase 9 / complete pipeline)
 * **Database Access**: Not implemented (stateless microservice by design, zero DB connection)
 
 

@@ -1,6 +1,6 @@
 import { useState, type FC, type FormEvent, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileAudio, Trash2, CheckCircle2, AlertCircle, UploadCloud } from 'lucide-react';
+import { FileAudio, FileVideo, Trash2, CheckCircle2, AlertCircle, UploadCloud } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { FileDropZone } from './FileDropZone';
@@ -189,7 +189,13 @@ export const UploadCard: FC<UploadCardProps> = ({ className = '' }) => {
                     flexShrink: 0,
                   }}
                 >
-                  <FileAudio size={22} />
+                  {selectedFile.name.toLowerCase().endsWith('.mp4') ||
+                  selectedFile.name.toLowerCase().endsWith('.mov') ||
+                  selectedFile.type.startsWith('video/') ? (
+                    <FileVideo size={22} />
+                  ) : (
+                    <FileAudio size={22} />
+                  )}
                 </div>
                 <div style={{ minWidth: 0 }}>
                   <div
@@ -241,7 +247,7 @@ export const UploadCard: FC<UploadCardProps> = ({ className = '' }) => {
                 onClick={handleRemoveFile}
                 disabled={isUploading}
                 style={{ color: 'var(--status-error)' }}
-                aria-label="Remove selected audio file"
+                aria-label="Remove selected file"
               >
                 Remove
               </Button>

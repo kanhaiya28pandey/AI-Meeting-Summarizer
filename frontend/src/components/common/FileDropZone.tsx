@@ -101,7 +101,7 @@ export const FileDropZone: FC<FileDropZoneProps> = ({
     <div
       role="button"
       tabIndex={disabled ? -1 : 0}
-      aria-label="Upload audio file. Drag and drop your audio here or press Enter to browse files."
+      aria-label="Upload meeting file. Drag and drop your audio or video here or press Enter to browse files."
       aria-disabled={disabled}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
@@ -122,9 +122,9 @@ export const FileDropZone: FC<FileDropZoneProps> = ({
     >
       <input
         ref={fileInputRef}
-        id="audio-file-input"
+        id="meeting-file-input"
         type="file"
-        accept=".mp3,.wav,.m4a,audio/mpeg,audio/wav,audio/x-wav,audio/mp4"
+        accept=".mp3,.wav,.m4a,.mp4,.mov,audio/mpeg,audio/wav,audio/x-wav,audio/mp4,video/mp4,video/quicktime"
         style={{ display: 'none' }}
         onChange={handleInputChange}
         disabled={disabled}
@@ -156,7 +156,7 @@ export const FileDropZone: FC<FileDropZoneProps> = ({
           marginBottom: '0.25rem',
         }}
       >
-        {isDragOver ? 'Drop your audio file here' : 'Upload your meeting'}
+        {isDragOver ? 'Drop your meeting file here' : 'Upload your meeting'}
       </h4>
 
       <p
@@ -166,7 +166,7 @@ export const FileDropZone: FC<FileDropZoneProps> = ({
           marginBottom: '1rem',
         }}
       >
-        Drag &amp; drop your audio here or <span style={{ color: 'var(--primary)', fontWeight: 600 }}>browse files</span>
+        Drag &amp; drop your audio or video here or <span style={{ color: 'var(--primary)', fontWeight: 600 }}>browse files</span>
       </p>
 
       <div
@@ -183,7 +183,7 @@ export const FileDropZone: FC<FileDropZoneProps> = ({
         }}
       >
         <Music size={13} />
-        <span>MP3 • WAV • M4A • Max 100 MB</span>
+        <span>MP3 • WAV • M4A • MP4 • MOV • Max 100 MB</span>
       </div>
     </div>
   );

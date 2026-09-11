@@ -8,8 +8,8 @@ export const Home: React.FC = () => {
   const workflowSteps = [
     {
       step: '1',
-      title: 'Upload Audio',
-      desc: 'Drop in your meeting recording in MP3, WAV, or M4A format.',
+      title: 'Upload Recording',
+      desc: 'Drop in your meeting recording in MP3, WAV, M4A, MP4, or MOV format.',
       icon: <Upload size={20} style={{ color: '#6366f1' }} />,
     },
     {
@@ -36,7 +36,7 @@ export const Home: React.FC = () => {
     <div>
       <PageHeader
         title="Turn Meetings into Action"
-        description="Upload your meeting audio to generate automated transcripts, executive summaries, and action items powered by Gemini AI."
+        description="Upload your meeting audio or video to generate automated transcripts, executive summaries, and action items powered by Gemini AI."
       />
 
       {/* Upload Zone Placeholder */}

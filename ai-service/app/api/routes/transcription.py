@@ -7,6 +7,7 @@ from fastapi import APIRouter, File, UploadFile, status
 
 from app.core.config import settings
 from app.schemas.transcription import TranscriptionResponse
+from app.services.media_service import media_service
 from app.services.transcription_service import transcription_service
 from app.utils.exceptions import InvalidAudioFileException
 
@@ -19,45 +20,65 @@ router = APIRouter()
     "",
     response_model=TranscriptionResponse,
     status_code=status.HTTP_200_OK,
-    summary="Transcribe audio file using Gemini 3.5 Transcribe",
-    description="Uploads an MP3, WAV, or M4A audio file and returns verbatim speech-to-text transcription."
+    summary="Transcribe audio or video meeting file",
+    description="Uploads an MP3, WAV, M4A audio or MP4, MOV video file and returns verbatim speech-to-text transcription."
 )
-async def transcribe_audio(
-    file: UploadFile = File(..., description="Audio file in MP3, WAV, or M4A format")
+async def transcribe_meeting(
+    file: UploadFile = File(..., description="Meeting file in MP3, WAV, M4A, MP4, or MOV format")
 ) -> TranscriptionResponse:
     if not file or not file.filename:
-        raise InvalidAudioFileException("No audio file provided", status_code=400)
+        raise InvalidAudioFileException("No media file provided", status_code=400)
 
     original_filename = os.path.basename(file.filename)
+
+    # 1. Validate format/extension through MediaService
+    media_type = media_service.get_media_type(original_filename, file.content_type)
+
+    # 2. Prepare upload destination directory
+    target_dir = Path(settings.TEMP_VIDEO_DIR if media_type == "video" else settings.TEMP_AUDIO_DIR)
+    target_dir.mkdir(parents=True, exist_ok=True)
+
     ext = Path(original_filename).suffix.lower()
-    if not ext:
-        raise InvalidAudioFileException("Audio file must have a valid extension (.mp3, .wav, .m4a)", status_code=422)
+    temp_upload_path = target_dir / f"{uuid.uuid4().hex}{ext}"
 
-    # Ensure temporary audio directory exists
-    temp_dir = Path(settings.TEMP_AUDIO_DIR)
-    temp_dir.mkdir(parents=True, exist_ok=True)
-
-    # Generate isolated safe filename
-    temp_file_path = temp_dir / f"{uuid.uuid4().hex}{ext}"
+    extracted_audio_to_clean: str | None = None
 
     try:
         # Stream file to disk in chunks to minimize memory consumption
-        with open(temp_file_path, "wb") as buffer:
+        with open(temp_upload_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        # Delegate transcription to service
+        # 3. Prepare audio (extracts audio track via FFmpeg if video)
+        transcribe_path, extracted_audio_to_clean, effective_name = (
+            media_service.prepare_audio_for_transcription(
+                input_media_path=str(temp_upload_path),
+                original_filename=original_filename,
+                declared_mime=file.content_type,
+            )
+        )
+
+        # 4. Delegate audio transcription to transcription service
+        effective_mime = "audio/wav" if media_type == "video" else file.content_type
         response = transcription_service.transcribe_audio(
-            file_path=str(temp_file_path),
-            original_filename=original_filename,
-            declared_mime=file.content_type
+            file_path=transcribe_path,
+            original_filename=effective_name,
+            declared_mime=effective_mime,
         )
         return response
 
     finally:
-        # Safe cleanup of temporary local file
+        # 5. Guaranteed cleanup of temporary upload file
         try:
-            if temp_file_path.exists():
-                os.remove(temp_file_path)
-                logger.info("Successfully deleted local temporary audio file: %s", temp_file_path.name)
-        except Exception as cleanup_err:
-            logger.warning("Failed to remove temporary audio file '%s': %s", temp_file_path, cleanup_err)
+            if temp_upload_path.exists():
+                os.remove(temp_upload_path)
+                logger.info("Successfully cleaned up uploaded file: %s", temp_upload_path.name)
+        except Exception as upload_cleanup_err:
+            logger.warning("Failed to clean up uploaded file '%s': %s", temp_upload_path, upload_cleanup_err)
+
+        # 6. Guaranteed cleanup of temporary extracted audio (if different from upload)
+        if extracted_audio_to_clean and os.path.exists(extracted_audio_to_clean):
+            try:
+                os.remove(extracted_audio_to_clean)
+                logger.info("Successfully cleaned up extracted audio file: %s", os.path.basename(extracted_audio_to_clean))
+            except Exception as extracted_cleanup_err:
+                logger.warning("Failed to clean up extracted audio '%s': %s", extracted_audio_to_clean, extracted_cleanup_err)

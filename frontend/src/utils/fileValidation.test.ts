@@ -42,7 +42,42 @@ describe('fileValidation', () => {
     assert.equal(res.error, undefined);
   });
 
-  it('should reject non-audio PDF file', () => {
+  it('should accept valid MP4 video file', () => {
+    const file = new MockFile('meeting.mp4', 25 * 1024 * 1024, 'video/mp4') as unknown as File;
+    const res = validateAudioFile(file);
+    assert.equal(res.valid, true);
+    assert.equal(res.error, undefined);
+  });
+
+  it('should accept valid MOV video file', () => {
+    const file = new MockFile('sync.mov', 40 * 1024 * 1024, 'video/quicktime') as unknown as File;
+    const res = validateAudioFile(file);
+    assert.equal(res.valid, true);
+    assert.equal(res.error, undefined);
+  });
+
+  it('should accept valid uppercase .MP4 extension', () => {
+    const file = new MockFile('KEYNOTE.MP4', 15 * 1024 * 1024, 'video/mp4') as unknown as File;
+    const res = validateAudioFile(file);
+    assert.equal(res.valid, true);
+    assert.equal(res.error, undefined);
+  });
+
+  it('should reject unsupported video format (.avi)', () => {
+    const file = new MockFile('clip.avi', 10 * 1024 * 1024, 'video/x-msvideo') as unknown as File;
+    const res = validateAudioFile(file);
+    assert.equal(res.valid, false);
+    assert.match(res.error!, /Unsupported file type.*MP4, or MOV/);
+  });
+
+  it('should reject unsupported video format (.mkv)', () => {
+    const file = new MockFile('record.mkv', 10 * 1024 * 1024, 'video/x-matroska') as unknown as File;
+    const res = validateAudioFile(file);
+    assert.equal(res.valid, false);
+    assert.match(res.error!, /Unsupported file type.*MP4, or MOV/);
+  });
+
+  it('should reject non-audio and non-video PDF file', () => {
     const file = new MockFile('document.pdf', 1024, 'application/pdf') as unknown as File;
     const res = validateAudioFile(file);
     assert.equal(res.valid, false);
@@ -57,7 +92,7 @@ describe('fileValidation', () => {
   });
 
   it('should reject oversized file (>100 MB)', () => {
-    const file = new MockFile('huge.mp3', MAX_AUDIO_FILE_SIZE_BYTES + 1, 'audio/mpeg') as unknown as File;
+    const file = new MockFile('huge.mp4', MAX_AUDIO_FILE_SIZE_BYTES + 1, 'video/mp4') as unknown as File;
     const res = validateAudioFile(file);
     assert.equal(res.valid, false);
     assert.match(res.error!, /Maximum size is 100 MB/);
@@ -66,7 +101,7 @@ describe('fileValidation', () => {
   it('should reject null or undefined file', () => {
     const res = validateAudioFile(null);
     assert.equal(res.valid, false);
-    assert.match(res.error!, /Please select an audio file/);
+    assert.match(res.error!, /Please select an audio or video file/);
   });
 });
 
