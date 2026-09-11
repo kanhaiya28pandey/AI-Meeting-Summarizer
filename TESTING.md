@@ -14,26 +14,38 @@ This document describes the testing architecture, test suites, execution command
 From the project root:
 
 ```powershell
-# In PowerShell (Windows)
-.\scripts\run_all_tests.ps1
+# Windows (PowerShell)
+pwsh -File .\scripts\run_all_tests.ps1
+
+# Linux / macOS (Bash)
+chmod +x ./scripts/run_all_tests.sh
+./scripts/run_all_tests.sh
 ```
 
 Or run each tier individually:
 
 ### Backend Tests (Spring Boot)
-```powershell
-cd backend
+```bash
+# Windows
 .\mvnw.cmd test -DDB_PASSWORD=12345
+
+# Linux / macOS
+./mvnw test -DDB_PASSWORD=12345
 ```
 
 ### AI Service Tests (FastAPI)
-```powershell
+```bash
+# Windows
 cd ai-service
 .\.venv\Scripts\pytest -v --cov=app --cov-report=term-missing
+
+# Linux / macOS
+cd ai-service
+pytest -v --cov=app --cov-report=term-missing
 ```
 
 ### Frontend Tests (React)
-```powershell
+```bash
 cd frontend
 npm test
 npm run test:coverage
