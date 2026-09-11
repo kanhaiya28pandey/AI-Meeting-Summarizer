@@ -96,20 +96,59 @@ The service will start on `http://localhost:8000`.
 }
 ```
 > [!NOTE]
-> This endpoint currently only validates and acknowledges processing requests from Spring Boot.
-> Actual transcription and AI processing will be implemented in later phases.
+> This endpoint validates and acknowledges processing requests from Spring Boot.
+> Actual audio transcription orchestration will be implemented in Phase 7.
 
-### 3. Interactive Swagger UI
+### 3. Gemini Text Analysis Test Endpoint (Phase 6)
+* **Method & Path**: `POST /api/v1/gemini/test`
+* **Status**: `200 OK` (or `422 Unprocessable Entity` for invalid input, `503 Service Unavailable` for API/service failure)
+* **Description**: Sends text input to Google Gemini and returns schema-validated structured intelligence using Gemini's structured output mode (`application/json`).
+* **Request Body**:
+```json
+{
+  "text": "The team decided to launch the new dashboard on Friday. Rahul will complete testing by Thursday."
+}
+```
+* **Response Body**:
+```json
+{
+  "summary": "The team agreed on releasing the new dashboard on Friday, with Rahul handling testing before launch.",
+  "key_decisions": [
+    "The new dashboard will launch on Friday."
+  ],
+  "action_items": [
+    {
+      "task": "Complete testing",
+      "owner": "Rahul",
+      "deadline": "Thursday"
+    }
+  ]
+}
+```
+
+> [!IMPORTANT]
+> **Zero-Hallucination Prompting**: Gemini is strictly instructed to only extract information explicitly stated in the input text. If an owner or deadline is unmentioned, they are returned as `null`. If no decisions or action items exist, empty arrays `[]` are returned.
+
+### 4. Interactive Swagger UI
 Explore and test the API visually at:
 ```text
 http://localhost:8000/docs
 ```
 
-### 4. ReDoc UI
+### 5. ReDoc UI
 Read comprehensive API documentation at:
 ```text
 http://localhost:8000/redoc
 ```
+
+---
+
+## Gemini Integration Details
+
+* **SDK**: `google-genai` (current official Python SDK)
+* **Model**: Configurable via `GEMINI_MODEL` (default: `gemini-2.5-flash`)
+* **API Key**: Loaded strictly from `GEMINI_API_KEY` environment variable. Never hardcoded or committed.
+* **Structured Output**: Native `types.GenerateContentConfig(response_mime_type="application/json", response_schema=GeminiTestResponse)` with two-tier Pydantic validation.
 
 ---
 
@@ -121,11 +160,11 @@ pytest
 
 ---
 
-## Current Status & Limitations (Phase 5)
+## Current Status & Limitations (Phase 6)
 * **Microservice Foundation**: Operational & tested
-* **Health Check & Docs**: Operational & verified
-* **Spring Boot Integration**: Operational (FastAPI acknowledges Spring Boot requests with `202 Accepted`)
-* **Gemini Integration**: Not implemented (scheduled for Phase 6)
+* **Health Check & Docs**: Operational & verified (Health check is independent of external Gemini calls)
+* **Spring Boot Integration**: Operational (`POST /api/v1/process` acknowledges with `202 Accepted`)
+* **Gemini Integration**: Operational (`POST /api/v1/gemini/test` extracts structured summary, decisions, actions)
 * **Transcription Pipeline**: Not implemented (scheduled for Phase 7)
 * **Audio/Video Processing**: Not implemented (scheduled for Phase 7 & 15)
 * **Database Access**: Not implemented (stateless microservice by design, zero DB connection)
