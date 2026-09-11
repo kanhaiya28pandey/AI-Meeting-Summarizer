@@ -1,0 +1,133 @@
+services:
+  # ----------------------------------------------------------------------------
+  # PostgreSQL Database Service
+  # ----------------------------------------------------------------------------
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-meeting_summarizer}
+      POSTGRES_USER: ${DB_USERNAME:-meeting_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-change_me}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - meeting-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    # Direct host access omitted by default for internal database security.
+    # To enable host access for debugging, uncomment:
+    # ports:
+    #   - "${DB_PORT:-5432}:5432"
+
+  # ----------------------------------------------------------------------------
+  # FastAPI AI Service (with FFmpeg and Gemini Integration)
+  # ----------------------------------------------------------------------------
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    image: meeting-summarizer-ai
+    environment:
+      APP_NAME: "AI Meeting Summarizer AI Service"
+      APP_VERSION: "1.0.0"
+      HOST: "0.0.0.0"
+      PORT: 8000
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      GEMINI_TRANSCRIPTION_MODEL: ${GEMINI_TRANSCRIPTION_MODEL:-gemini-3.5-transcribe}
+      MAX_AUDIO_FILE_SIZE_MB: 100
+      MAX_EXTRACTED_AUDIO_SIZE_MB: 500
+      TEMP_AUDIO_DIR: /tmp/meeting-audio
+      TEMP_VIDEO_DIR: /tmp/meeting-video
+      FFMPEG_PATH: ffmpeg
+      FFMPEG_TIMEOUT_SECONDS: 600
+    networks:
+      - meeting-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    # Kept internal to prevent direct exposure to the browser.
+    # To enable host access for debugging, uncomment:
+    # ports:
+    #   - "${AI_SERVICE_PORT:-8000}:8000"
+
+  # ----------------------------------------------------------------------------
+  # Spring Boot Backend Service
+  # ----------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: meeting-summarizer-backend
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-meeting_summarizer}
+      DB_USERNAME: ${DB_USERNAME:-meeting_user}
+      DB_PASSWORD: ${DB_PASSWORD:-change_me}
+      AI_SERVICE_URL: http://ai-service:8000
+      FRONTEND_URL: http://localhost:3000,http://localhost:5173
+      TEMP_UPLOAD_DIR: /tmp/meeting-uploads
+    depends_on:
+      db:
+        condition: service_healthy
+      ai-service:
+        condition: service_healthy
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    networks:
+      - meeting-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # ----------------------------------------------------------------------------
+  # React + Nginx Frontend Service
+  # ----------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: /api
+    image: meeting-summarizer-frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    networks:
+      - meeting-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+# ------------------------------------------------------------------------------
+# Persistent Storage Volumes
+# ------------------------------------------------------------------------------
+volumes:
+  postgres_data:
+    name: postgres_data
+
+# ------------------------------------------------------------------------------
+# Dedicated Internal Network
+# ------------------------------------------------------------------------------
+networks:
+  meeting-network:
+    name: meeting-network
+    driver: bridge

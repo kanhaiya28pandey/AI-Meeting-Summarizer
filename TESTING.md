@@ -118,7 +118,7 @@ pytest tests/api/test_contract_schemas.py -v
 pytest --cov=app --cov-report=term-missing
 
 # Run live Gemini integration test (requires API key)
-$env:GEMINI_API_KEY="AIzaSy..."
+$env:GEMINI_API_KEY="your_gemini_api_key_here"
 $env:RUN_LIVE_AI_TESTS="true"
 pytest -m live_ai -v
 ```

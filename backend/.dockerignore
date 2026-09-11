@@ -1,0 +1,14 @@
+.git
+.gitignore
+target
+*.log
+.env
+.env.*
+.idea
+.vscode
+temp
+*.mp3
+*.wav
+*.m4a
+*.mp4
+*.mov
