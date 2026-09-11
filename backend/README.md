@@ -27,10 +27,144 @@ Ensure your PostgreSQL 18 service is running, then create the database if it doe
 CREATE DATABASE meeting_summarizer;
 ```
 
-Hibernate will automatically manage schema generation in development mode (`ddl-auto=update`), creating the `meetings` table with native `JSONB` support for key decisions and action items.
+---
 
-## Running the Backend Locally
-Set your local database credentials and launch the application:
+## REST API Endpoints
+
+### 1. Health Check
+* **Method & Path**: `GET /api/health`
+* **Status**: `200 OK`
+* **Response**:
+```json
+{
+  "status": "UP",
+  "service": "AI Meeting Summarizer Backend"
+}
+```
+
+---
+
+### 2. Create Meeting
+* **Method & Path**: `POST /api/meetings`
+* **Headers**: `Content-Type: application/json`
+* **Status**: `201 Created`
+* **Header**: `Location: /api/meetings/{id}`
+* **Request Body**:
+```json
+{
+  "title": "Sprint Planning Meeting",
+  "originalFileName": "sprint-planning.mp3",
+  "fileType": "audio/mpeg",
+  "duration": 3600
+}
+```
+* **Response**:
+```json
+{
+  "id": "52545fbb-fe1a-4010-ae7e-62fa218b83e5",
+  "title": "Sprint Planning Meeting",
+  "originalFileName": "sprint-planning.mp3",
+  "fileType": "audio/mpeg",
+  "duration": 3600,
+  "transcript": null,
+  "summary": null,
+  "keyDecisions": [],
+  "actionItems": [],
+  "status": "UPLOADED",
+  "createdAt": "2026-09-11T16:53:55.1782861",
+  "updatedAt": "2026-09-11T16:53:55.1782861"
+}
+```
+
+---
+
+### 3. Get All Meetings
+* **Method & Path**: `GET /api/meetings`
+* **Status**: `200 OK`
+* **Response**:
+```json
+[
+  {
+    "id": "52545fbb-fe1a-4010-ae7e-62fa218b83e5",
+    "title": "Sprint Planning Meeting",
+    "originalFileName": "sprint-planning.mp3",
+    "fileType": "audio/mpeg",
+    "duration": 3600,
+    "transcript": null,
+    "summary": null,
+    "keyDecisions": [],
+    "actionItems": [],
+    "status": "UPLOADED",
+    "createdAt": "2026-09-11T16:53:55.1782861",
+    "updatedAt": "2026-09-11T16:53:55.1782861"
+  }
+]
+```
+
+---
+
+### 4. Get Meeting by ID
+* **Method & Path**: `GET /api/meetings/{id}`
+* **Status**: `200 OK` (or `404 Not Found` if nonexistent, `400 Bad Request` if invalid UUID)
+* **Response (200 OK)**:
+```json
+{
+  "id": "52545fbb-fe1a-4010-ae7e-62fa218b83e5",
+  "title": "Sprint Planning Meeting",
+  "originalFileName": "sprint-planning.mp3",
+  "fileType": "audio/mpeg",
+  "duration": 3600,
+  "transcript": null,
+  "summary": null,
+  "keyDecisions": [],
+  "actionItems": [],
+  "status": "UPLOADED",
+  "createdAt": "2026-09-11T16:53:55.1782861",
+  "updatedAt": "2026-09-11T16:53:55.1782861"
+}
+```
+
+---
+
+### 5. Delete Meeting
+* **Method & Path**: `DELETE /api/meetings/{id}`
+* **Status**: `204 No Content` (or `404 Not Found` if nonexistent)
+
+---
+
+### 6. Error Response Formats
+
+#### Validation Error (`400 Bad Request`)
+```json
+{
+  "timestamp": "2026-09-11T16:53:55.5205328",
+  "status": 400,
+  "error": "Validation Failed",
+  "message": "Request validation failed",
+  "path": "/api/meetings",
+  "fieldErrors": {
+    "title": "Title is required",
+    "originalFileName": "Original file name is required",
+    "fileType": "File type is required",
+    "duration": "Duration must be zero or greater"
+  }
+}
+```
+
+#### Not Found Error (`404 Not Found`)
+```json
+{
+  "timestamp": "2026-09-11T16:53:55.5108354",
+  "status": 404,
+  "error": "Not Found",
+  "message": "Meeting not found with ID: 52545fbb-fe1a-4010-ae7e-62fa218b83e5",
+  "path": "/api/meetings/52545fbb-fe1a-4010-ae7e-62fa218b83e5"
+}
+```
+
+---
+
+## Running Locally
 ```bash
 # Windows PowerShell
 $env:DB_PASSWORD="your_password"
@@ -40,22 +174,7 @@ $env:DB_PASSWORD="your_password"
 DB_PASSWORD="your_password" ./mvnw spring-boot:run
 ```
 
-## Running Tests
-Verify persistence and database integration:
+## Running Automated Tests
 ```bash
 .\mvnw.cmd test -DDB_PASSWORD="your_password"
-```
-
-## Verification & Health Check
-Verify the service health:
-```bash
-curl http://localhost:8080/api/health
-```
-
-Expected Response:
-```json
-{
-  "status": "UP",
-  "service": "AI Meeting Summarizer Backend"
-}
 ```
