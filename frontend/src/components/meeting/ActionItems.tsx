@@ -135,7 +135,7 @@ export const ActionItems: FC<ActionItemsProps> = ({ actionItems }) => {
                     }}
                   >
                     <User size={13} />
-                    <span>Owner: {hasOwner ? item.owner : '—'}</span>
+                    <span>Owner: {hasOwner ? item.owner : 'Not specified'}</span>
                   </div>
 
                   {/* Deadline */}
@@ -151,7 +151,7 @@ export const ActionItems: FC<ActionItemsProps> = ({ actionItems }) => {
                     }}
                   >
                     <Calendar size={13} />
-                    <span>Deadline: {hasDeadline ? item.deadline : '—'}</span>
+                    <span>Deadline: {hasDeadline ? item.deadline : 'Not specified'}</span>
                   </div>
                 </div>
               </div>

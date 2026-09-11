@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "test": "node --test src/utils/fileValidation.test.ts src/utils/apiError.test.ts src/utils/formatDuration.test.ts src/utils/formatDate.test.ts src/hooks/useMeetingProcessing.test.ts src/components/meeting/MeetingResults.test.ts src/components/common/ConfirmDialog.test.ts src/components/meeting/MeetingsData.test.ts src/components/common/ErrorBoundary.test.ts",
+    "test": "vitest run",
+    "test:node": "node --test src/utils/fileValidation.test.ts src/utils/apiError.test.ts src/utils/formatDuration.test.ts src/utils/formatDate.test.ts src/hooks/useMeetingProcessing.test.ts src/components/meeting/MeetingResults.test.ts src/components/common/ConfirmDialog.test.ts src/components/meeting/MeetingsData.test.ts src/components/common/ErrorBoundary.test.ts",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -17,12 +20,18 @@
     "react-router-dom": "^7.18.3"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "@vitest/coverage-v8": "^5.0.0",
+    "jsdom": "^30.0.1",
     "oxlint": "^1.81.0",
     "typescript": "~6.0.2",
-    "vite": "^8.3.0"
+    "vite": "^8.3.0",
+    "vitest": "^5.0.0"
   }
 }
