@@ -9,6 +9,15 @@ class Settings(BaseSettings):
     SPRING_BOOT_URL: str = "http://localhost:8080"
     GEMINI_API_KEY: str = ""
     GEMINI_MODEL: str = "gemini-2.5-flash"
+    GEMINI_TRANSCRIPTION_MODEL: str = "gemini-3.5-transcribe"
+    MAX_AUDIO_FILE_SIZE_MB: int = 100
+    TEMP_AUDIO_DIR: str = "./temp/audio"
+    TRANSCRIPTION_ENABLE_DIARIZATION: bool = True
+    TRANSCRIPTION_ENABLE_TIMESTAMPS: bool = True
+
+    @property
+    def max_audio_file_size_bytes(self) -> int:
+        return self.MAX_AUDIO_FILE_SIZE_MB * 1024 * 1024
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -129,13 +129,36 @@ The service will start on `http://localhost:8000`.
 > [!IMPORTANT]
 > **Zero-Hallucination Prompting**: Gemini is strictly instructed to only extract information explicitly stated in the input text. If an owner or deadline is unmentioned, they are returned as `null`. If no decisions or action items exist, empty arrays `[]` are returned.
 
-### 4. Interactive Swagger UI
+### 4. Audio Transcription Endpoint (Phase 7)
+* **Method & Path**: `POST /api/v1/transcription`
+* **Status**: `200 OK` (or `400 Bad Request` for empty/corrupted files, `422 Unprocessable Entity` for unsupported formats, `503 Service Unavailable` for downstream AI service errors)
+* **Description**: Accepts multipart audio upload (`MP3`, `WAV`, `M4A`), uploads to Gemini via Files API, transcribes using `gemini-3.5-transcribe` with verbatim transcription, speaker diarization, and word timestamps, and securely cleans up local and remote temporary files.
+* **Form-Data**:
+  * `file`: Audio file binary (`.mp3`, `.wav`, `.m4a`) up to configured max size (default: 100 MB).
+* **Response Body**:
+```json
+{
+  "success": true,
+  "transcript": "Hello team, welcome to the quarterly planning meeting. Today we're reviewing our roadmap...",
+  "language": "en",
+  "segments": [
+    {
+      "speaker": "spk_1",
+      "text": "Hello team, welcome to the quarterly planning meeting.",
+      "start_time": 0.0,
+      "end_time": 4.2
+    }
+  ]
+}
+```
+
+### 5. Interactive Swagger UI
 Explore and test the API visually at:
 ```text
 http://localhost:8000/docs
 ```
 
-### 5. ReDoc UI
+### 6. ReDoc UI
 Read comprehensive API documentation at:
 ```text
 http://localhost:8000/redoc
@@ -146,8 +169,10 @@ http://localhost:8000/redoc
 ## Gemini Integration Details
 
 * **SDK**: `google-genai` (current official Python SDK)
-* **Model**: Configurable via `GEMINI_MODEL` (default: `gemini-2.5-flash`)
+* **Text Analysis Model**: Configurable via `GEMINI_MODEL` (default: `gemini-2.5-flash`)
+* **Audio Transcription Model**: Configurable via `GEMINI_TRANSCRIPTION_MODEL` (default: `gemini-3.5-transcribe`)
 * **API Key**: Loaded strictly from `GEMINI_API_KEY` environment variable. Never hardcoded or committed.
+* **Audio Processing**: Streamed chunk-based upload into `./temp/audio`, verified for size and MIME integrity, uploaded to Gemini Files API, and deleted immediately after generation completes.
 * **Structured Output**: Native `types.GenerateContentConfig(response_mime_type="application/json", response_schema=GeminiTestResponse)` with two-tier Pydantic validation.
 
 ---
@@ -160,11 +185,12 @@ pytest
 
 ---
 
-## Current Status & Limitations (Phase 6)
+## Current Status & Limitations (Phase 7)
 * **Microservice Foundation**: Operational & tested
 * **Health Check & Docs**: Operational & verified (Health check is independent of external Gemini calls)
 * **Spring Boot Integration**: Operational (`POST /api/v1/process` acknowledges with `202 Accepted`)
-* **Gemini Integration**: Operational (`POST /api/v1/gemini/test` extracts structured summary, decisions, actions)
-* **Transcription Pipeline**: Not implemented (scheduled for Phase 7)
-* **Audio/Video Processing**: Not implemented (scheduled for Phase 7 & 15)
+* **Gemini Text Intelligence**: Operational (`POST /api/v1/gemini/test` extracts structured summary, decisions, actions)
+* **Audio Transcription**: Operational (`POST /api/v1/transcription` via `gemini-3.5-transcribe` Files API)
+* **Full Pipeline Orchestration**: Not implemented (scheduled for Phase 8 / subsequent phases)
 * **Database Access**: Not implemented (stateless microservice by design, zero DB connection)
+
