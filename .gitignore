@@ -16,10 +16,11 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
-.Python
+.venv/
 env/
 venv/
 ENV/
+.pytest_cache/
 build/
 develop-eggs/
 dist/
