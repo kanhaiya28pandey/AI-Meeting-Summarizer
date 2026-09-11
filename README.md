@@ -403,3 +403,4 @@ Read [TESTING.md](./TESTING.md) for full testing philosophy and opt-in live test
 - [TESTING.md](./TESTING.md) — Test strategy, suite breakdowns, coverage reports, and runner commands.
 - [DOCKER.md](./DOCKER.md) — Containerization guide, Compose commands, volume persistence, and networking.
 - [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) — Common errors, port conflicts, database recoveries, and solutions.
+- [MANUAL_TESTING_GUIDE.md](./MANUAL_TESTING_GUIDE.md) — Step-by-step user testing guide for testing every module and menu.
