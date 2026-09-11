@@ -21,7 +21,7 @@ class GeminiService:
         model: Optional[str] = None,
         client: Optional[genai.Client] = None
     ):
-        self.api_key = api_key or settings.GEMINI_API_KEY
+        self.api_key = api_key if api_key is not None else settings.GEMINI_API_KEY
         self.model = model or settings.GEMINI_MODEL
         self._client = client
 

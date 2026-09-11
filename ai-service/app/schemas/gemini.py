@@ -7,20 +7,17 @@ class ActionItem(BaseModel):
         ...,
         min_length=1,
         max_length=1000,
-        description="Actionable task or deliverable description",
-        examples=["Complete dashboard testing"]
+        description="Actionable task or deliverable description"
     )
     owner: Optional[str] = Field(
         default=None,
         max_length=200,
-        description="Assignee/owner explicitly stated in text; null if not explicitly mentioned",
-        examples=["Rahul"]
+        description="Assignee/owner explicitly stated in text; null if not explicitly mentioned"
     )
     deadline: Optional[str] = Field(
         default=None,
         max_length=200,
-        description="Due date or timeframe explicitly stated in text; null if not explicitly mentioned",
-        examples=["Thursday"]
+        description="Due date or timeframe explicitly stated in text; null if not explicitly mentioned"
     )
 
 
@@ -29,8 +26,7 @@ class GeminiTestRequest(BaseModel):
         ...,
         min_length=1,
         max_length=20000,
-        description="Meeting text snippet or discussion notes to analyze with Gemini",
-        examples=["The team decided to launch on Friday. Rahul will complete testing by Thursday."]
+        description="Meeting text snippet or discussion notes to analyze with Gemini"
     )
 
     @field_validator("text")

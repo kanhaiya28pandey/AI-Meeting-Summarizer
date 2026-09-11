@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     PORT: int = 8000
     SPRING_BOOT_URL: str = "http://localhost:8080"
     GEMINI_API_KEY: str = ""
-    GEMINI_MODEL: str = "gemini-2.5-flash"
+    GEMINI_MODEL: str = "gemini-3.6-flash"
     GEMINI_TRANSCRIPTION_MODEL: str = "gemini-3.5-transcribe"
     MAX_AUDIO_FILE_SIZE_MB: int = 100
     TEMP_AUDIO_DIR: str = "./temp/audio"

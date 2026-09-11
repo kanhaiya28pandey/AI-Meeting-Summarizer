@@ -7,20 +7,17 @@ class ActionItem(BaseModel):
         ...,
         min_length=1,
         max_length=1000,
-        description="Actionable task or deliverable explicitly identified in the transcript",
-        examples=["Complete payment testing"]
+        description="Actionable task or deliverable explicitly identified in the transcript"
     )
     owner: Optional[str] = Field(
         default=None,
         max_length=200,
-        description="Explicit assignee/owner identified in the transcript; null if not explicitly assigned",
-        examples=["Rahul"]
+        description="Explicit assignee/owner identified in the transcript; null if not explicitly assigned"
     )
     deadline: Optional[str] = Field(
         default=None,
         max_length=200,
-        description="Explicit due date or timeframe identified in the transcript; null if not explicitly mentioned",
-        examples=["Thursday"]
+        description="Explicit due date or timeframe identified in the transcript; null if not explicitly mentioned"
     )
 
     @field_validator("task")
@@ -45,8 +42,7 @@ class MeetingAnalysisRequest(BaseModel):
     transcript: str = Field(
         ...,
         min_length=1,
-        description="Full text transcript of the meeting to analyze",
-        examples=["The team decided to launch the payment release on Friday. Rahul will complete payment testing by Thursday."]
+        description="Full text transcript of the meeting to analyze"
     )
 
     @field_validator("transcript")
