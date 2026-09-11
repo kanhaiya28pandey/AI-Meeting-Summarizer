@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     TEMP_AUDIO_DIR: str = "./temp/audio"
     TRANSCRIPTION_ENABLE_DIARIZATION: bool = True
     TRANSCRIPTION_ENABLE_TIMESTAMPS: bool = True
+    MAX_TRANSCRIPT_LENGTH: int = 100000
 
     @property
     def max_audio_file_size_bytes(self) -> int:

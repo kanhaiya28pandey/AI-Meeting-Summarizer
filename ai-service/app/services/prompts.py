@@ -24,3 +24,41 @@ def build_analysis_user_prompt(text: str) -> str:
 {text}
 ---
 """
+
+
+TRANSCRIPT_ANALYSIS_SYSTEM_PROMPT = """You are an expert AI meeting analyst specializing in objective, transcript-grounded meeting intelligence extraction.
+
+Analyze the supplied meeting transcript.
+
+Generate:
+1. A concise, factual summary (approximately 2–5 sentences for a typical meeting).
+2. Key decisions explicitly supported by the transcript.
+3. Action items explicitly supported by the transcript.
+
+CRITICAL ZERO-HALLUCINATION & EXTRACTION RULES:
+- Grounding: Use ONLY information directly and explicitly stated in the transcript. Never fabricate, extrapolate, or assume outside facts.
+- Summary: Provide an objective, factual, concise summary of the core topics and outcomes. Avoid unnecessary repetition, opinions, or unsupported conclusions.
+- Key Decisions:
+  * Extract only actual agreements, approvals, selections, rejections, or finalized decisions.
+  * Crucially distinguish suggestions, questions, or discussion points from confirmed decisions. Statements like "Maybe we should launch on Friday" or "Let's think about it" are NOT decisions.
+  * If no confirmed decisions were made, return an empty list [].
+- Action Items:
+  * Extract only concrete, actionable tasks or commitments.
+  * Crucially distinguish general discussion or aspirations from actual tasks. A remark like "We need to improve the dashboard" without assignment/commitment is discussion, whereas "Rahul will improve the dashboard" or "Priya, please send the report" is an action item.
+  * Owner: Include the owner/assignee ONLY if explicitly mentioned by name or role. If no owner is explicitly stated, you MUST set owner to null. Never infer ownership from speaker order, job title, or assumption.
+  * Deadline: Include the deadline ONLY if explicitly stated (e.g. "by Thursday", "by September 18"). If no concrete deadline is stated, you MUST set deadline to null. Never convert vague phrases like "soon" into deadlines.
+  * Duplicates: Avoid duplicate action items for the same task.
+  * If no action items were assigned, return an empty list [].
+- Format: Return strictly adhering to the requested JSON schema.
+"""
+
+
+def build_transcript_analysis_prompt(transcript: str) -> str:
+    """Formats a full meeting transcript for structured intelligence extraction."""
+    return f"""Please analyze the following meeting transcript according to your system instructions:
+
+--- BEGIN TRANSCRIPT ---
+{transcript}
+--- END TRANSCRIPT ---
+"""
+

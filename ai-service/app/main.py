@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from app.api.routes import health, process, gemini, transcription
+from app.api.routes import health, process, gemini, transcription, analyze
 from app.core.config import settings
 from app.utils.exceptions import GeminiServiceError
 
@@ -17,6 +17,7 @@ app.include_router(health.router, prefix="/api", tags=["Health"])
 app.include_router(process.router, prefix="/api/v1", tags=["Process"])
 app.include_router(gemini.router, prefix="/api/v1/gemini", tags=["Gemini"])
 app.include_router(transcription.router, prefix="/api/v1/transcription", tags=["Transcription"])
+app.include_router(analyze.router, prefix="/api/v1/analyze", tags=["Analysis"])
 
 
 @app.exception_handler(GeminiServiceError)
