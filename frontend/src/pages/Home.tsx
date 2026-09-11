@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { Upload, Mic, Sparkles, CheckCircle2 } from 'lucide-react';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Card } from '../components/ui/Card';
