@@ -52,7 +52,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponse> handleTypeMismatchException(
             MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
-        String message = String.format("Invalid value '%s' for parameter '%s'", ex.getValue(), ex.getName());
+        String message;
+        if (ex.getRequiredType() != null && ex.getRequiredType().isAssignableFrom(java.util.UUID.class)) {
+            message = "Invalid meeting ID format. Expected a valid UUID.";
+        } else {
+            message = String.format("Invalid value '%s' for parameter '%s'", ex.getValue(), ex.getName());
+        }
         ErrorResponse errorResponse = new ErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.BAD_REQUEST.value(),
@@ -76,6 +81,19 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
+    @ExceptionHandler(org.springframework.web.HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMediaTypeNotSupportedException(
+            org.springframework.web.HttpMediaTypeNotSupportedException ex, HttpServletRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.UNSUPPORTED_MEDIA_TYPE.value(),
+                "Unsupported Media Type",
+                "Unsupported media type. Supported formats: MP3, WAV, M4A, MP4, MOV",
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(errorResponse);
+    }
+
     @ExceptionHandler(AiServiceException.class)
     public ResponseEntity<ErrorResponse> handleAiServiceException(
             AiServiceException ex, HttpServletRequest request) {
@@ -96,7 +114,7 @@ public class GlobalExceptionHandler {
                 LocalDateTime.now(),
                 HttpStatus.PAYLOAD_TOO_LARGE.value(),
                 "Payload Too Large",
-                "Uploaded audio file exceeds maximum permitted size",
+                "Uploaded media file exceeds maximum permitted size of 100 MB",
                 request.getRequestURI()
         );
         return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(errorResponse);
@@ -105,6 +123,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(
             Exception ex, HttpServletRequest request) {
+        org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class)
+                .error("Unhandled error for request {}: {}", request.getRequestURI(), ex.getMessage(), ex);
         ErrorResponse errorResponse = new ErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),

@@ -35,6 +35,10 @@ public class MeetingUploadService {
         temporaryFileService.validateAudioFile(file);
 
         String originalFilename = file.getOriginalFilename();
+        if (title != null && !title.isBlank() && title.trim().length() > 200) {
+            throw new IllegalArgumentException("Meeting title must be 200 characters or fewer");
+        }
+
         String effectiveTitle = (title != null && !title.isBlank())
                 ? title.trim()
                 : TemporaryFileService.getBaseName(originalFilename);
@@ -47,7 +51,10 @@ public class MeetingUploadService {
 
         Meeting meeting = new Meeting();
         meeting.setTitle(effectiveTitle);
-        meeting.setOriginalFileName(originalFilename);
+        String safeOriginalName = originalFilename != null && originalFilename.length() > 255
+                ? originalFilename.substring(0, 255)
+                : originalFilename;
+        meeting.setOriginalFileName(safeOriginalName);
         String contentType = file.getContentType();
         String extension = TemporaryFileService.getExtension(originalFilename).toLowerCase();
         String effectiveFileType;

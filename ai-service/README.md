@@ -218,6 +218,17 @@ http://localhost:8000/redoc
 
 ---
 
+## Security & Reliability Hardening (Phase 16)
+
+* **Safe FFmpeg Subprocess**: Invoked strictly with array arguments and `shell=False` to prevent command injection. Timeout enforced via `FFMPEG_TIMEOUT_SECONDS`.
+* **Prompt Injection Defense**: Transcripts are explicitly declared as untrusted meeting data. Directives to ignore instructions or leak API keys are ignored by system prompts.
+* **Bounded Output Schemas**: Strict Pydantic max-length constraints on AI summaries (5,000 chars), decision items (1,000 chars, max 50 items), and action items (1,000 chars, max 50 items).
+* **Upload Limits & Streaming**: Direct uploads to `/api/v1/transcription` stream in chunks and enforce the 100 MB limit, returning HTTP 413 if exceeded.
+* **Readiness Endpoint**: `GET /api/health/readiness` checks storage directory writability without executing expensive external API calls.
+* **Safe Error Responses**: Unhandled exceptions return sanitized JSON without exposing system paths or internal tracebacks.
+
+---
+
 ## Running Automated Tests
 
 ```bash
@@ -226,13 +237,14 @@ pytest
 
 ---
 
-## Current Status (Phase 15)
+## Current Status (Phase 16)
 * **Microservice Foundation**: Operational & tested
-* **Health Check & Docs**: Operational & verified (Health check is independent of external Gemini calls)
+* **Health Check & Readiness**: Operational & verified (`/api/health`, `/api/health/readiness`)
 * **Spring Boot Integration**: Operational (`POST /api/v1/process` acknowledges with `202 Accepted`)
 * **Gemini Text Intelligence**: Operational (`POST /api/v1/gemini/test` extracts structured summary, decisions, actions)
 * **Audio & Video Transcription**: Operational (`POST /api/v1/transcription` via FFmpeg audio extraction & `gemini-3.5-transcribe` Files API)
 * **Meeting Transcript Analysis**: Operational (`POST /api/v1/analyze` via `gemini-2.5-flash` structured extraction)
+* **Security & Reliability Hardening**: Operational (safe subprocess, prompt hardening, schema limits, correlation headers)
 * **Database Access**: Not implemented (stateless microservice by design, zero DB connection)
 
 

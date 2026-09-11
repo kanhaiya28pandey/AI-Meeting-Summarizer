@@ -80,14 +80,26 @@ public class TemporaryFileService {
 
         String originalFilename = file.getOriginalFilename();
         String extension = getExtension(originalFilename).toLowerCase();
-        String safeBaseName = Paths.get(originalFilename).getFileName().toString()
-                .replaceAll("[^a-zA-Z0-9._-]", "_");
+
+        // Normalize slashes and extract strictly the leaf filename
+        String normalizedSlash = originalFilename.replace('\\', '/');
+        int lastSlash = normalizedSlash.lastIndexOf('/');
+        String leafName = lastSlash >= 0 ? normalizedSlash.substring(lastSlash + 1) : normalizedSlash;
+        if (leafName.isBlank()) {
+            leafName = "upload" + extension;
+        }
+
+        // Sanitize all special and shell-sensitive characters
+        String safeBaseName = leafName.replaceAll("[^a-zA-Z0-9._-]", "_");
+        if (safeBaseName.length() > 100) {
+            safeBaseName = safeBaseName.substring(0, 100);
+        }
 
         String uniqueFileName = UUID.randomUUID() + "_" + safeBaseName;
         Path targetPath = this.tempDir.resolve(uniqueFileName).normalize();
 
-        // Path traversal guard
-        if (!targetPath.startsWith(this.tempDir)) {
+        // Path traversal guard: ensure strictly inside tempDir root
+        if (!targetPath.startsWith(this.tempDir) || !targetPath.getParent().equals(this.tempDir)) {
             throw new SecurityException("Invalid file path specification");
         }
 
@@ -125,8 +137,11 @@ public class TemporaryFileService {
         if (filename == null || filename.isBlank()) {
             return "Untitled Meeting";
         }
-        String clean = Paths.get(filename).getFileName().toString();
+        String normalized = filename.replace('\\', '/');
+        int lastSlash = normalized.lastIndexOf('/');
+        String clean = lastSlash >= 0 ? normalized.substring(lastSlash + 1) : normalized;
         int dotIdx = clean.lastIndexOf('.');
-        return dotIdx > 0 ? clean.substring(0, dotIdx) : clean;
+        String base = dotIdx > 0 ? clean.substring(0, dotIdx) : clean;
+        return base.isBlank() ? "Untitled Meeting" : base;
     }
 }

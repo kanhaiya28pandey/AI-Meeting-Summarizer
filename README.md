@@ -35,6 +35,20 @@ PostgreSQL (18+)       FastAPI AI Service (Python 3.14)
 - `backend/`: Spring Boot 4.1 backend with PostgreSQL persistence, asynchronous task execution, and REST APIs.
 - `ai-service/`: FastAPI microservice encapsulating FFmpeg audio extraction and Google Gemini integrations.
 
+## Security & Reliability Hardening
+
+- **Security Headers & CORS**: Explicit security headers (`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`) and strict origin/method/header CORS controls.
+- **Request Tracing & Correlation**: `X-Request-ID` propagation across React, Spring Boot, and FastAPI with validation against `^[a-zA-Z0-9_-]{1,64}$`.
+- **Input Validation & Sanitization**:
+  - Filename sanitization against path traversal (`..`, slashes) and command injection vectors with canonical path verification.
+  - Multi-layer file size limits (100 MB max upload, streaming chunk rejection, empty file rejection).
+  - Bounded Pydantic/JPA schemas to prevent resource exhaustion and oversized payloads.
+- **Safe Subprocess Execution**: Subprocess execution with `shell=False` and strict parameter array invocation with configurable timeouts.
+- **Prompt Injection Defenses**: Strict delimiters and adversarial instruction negation ensuring Gemini treats transcripts strictly as untrusted data.
+- **Thread Safety**: Concurrent duplicate worker prevention via thread-safe in-memory execution guards.
+- **Readiness Probes**: Dedicated `/api/health/readiness` endpoints validating real upstream dependencies (PostgreSQL database connection pool and storage readiness).
+- **Frontend Error Resilience**: Top-level React error boundaries providing user-friendly fallback UI without leaking internal stack traces or technical details.
+
 ## Prerequisites
 
 - Java 21+ & Maven wrapper (included)
@@ -43,3 +57,4 @@ PostgreSQL (18+)       FastAPI AI Service (Python 3.14)
 - PostgreSQL 16+
 - FFmpeg (installed and available in system PATH or configured via `FFMPEG_PATH`)
 - Google Gemini API Key (`GEMINI_API_KEY`)
+

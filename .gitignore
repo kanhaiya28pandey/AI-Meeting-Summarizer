@@ -3,6 +3,13 @@
 .env.*
 !.env.example
 
+# Media files
+*.mp3
+*.wav
+*.m4a
+*.mp4
+*.mov
+
 # Java & Maven
 target/
 *.class

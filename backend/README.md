@@ -195,6 +195,36 @@ curl -X POST http://localhost:8080/api/meetings/upload \
 
 ---
 
+### 8. System Readiness Probe (Phase 16)
+* **Method & Path**: `GET /api/health/readiness`
+* **Status**: `200 OK` (or `503 Service Unavailable` if database disconnected)
+* **Description**: Verifies PostgreSQL database connectivity without executing expensive queries or exposing internal database metadata.
+
+---
+
+## Security & Reliability (Phase 16)
+
+* **Upload & Resource Bounds**:
+  * Enforced file size limit: 100 MB default (configurable via `MAX_AUDIO_FILE_SIZE`).
+  * Enforced formats: MP3, WAV, M4A, MP4, MOV. Unsupported files are rejected with HTTP 400/415.
+  * Meeting title strictly bounded to 200 characters.
+* **Path Traversal & Injection Defense**:
+  * Uploaded filenames are sanitized and stripped of directory traversal sequences (`..`, `/`, `\`).
+  * Storage paths strictly verified under the configured temp upload directory (`app.upload.temp-dir`).
+* **HTTP Security & Correlation**:
+  * Responses include `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`.
+  * Meeting APIs include `Cache-Control: no-store, no-cache, must-revalidate`.
+  * Every request propagates or generates an `X-Request-ID` correlation ID.
+* **Concurrency Protection**:
+  * In-process active set prevents concurrent duplicate worker threads on the same meeting.
+  * Partial result preservation: successful transcripts remain saved if analysis encounters downstream failure.
+* **Known MVP Limitations**:
+  1. No authentication or user accounts (single-user local deployment).
+  2. Background tasks use an in-process executor and do not survive application restarts.
+  3. No cloud storage; temporary files are stored on local disk and cleaned up automatically.
+
+---
+
 ## Running Locally
 ```bash
 # Windows PowerShell

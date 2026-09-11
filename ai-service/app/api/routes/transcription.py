@@ -39,14 +39,30 @@ async def transcribe_meeting(
     target_dir.mkdir(parents=True, exist_ok=True)
 
     ext = Path(original_filename).suffix.lower()
-    temp_upload_path = target_dir / f"{uuid.uuid4().hex}{ext}"
+    temp_upload_path = (target_dir / f"{uuid.uuid4().hex}{ext}").resolve()
+    if not temp_upload_path.is_relative_to(target_dir.resolve()):
+        raise InvalidAudioFileException("Invalid media file path", status_code=400)
 
     extracted_audio_to_clean: str | None = None
 
     try:
-        # Stream file to disk in chunks to minimize memory consumption
+        # Stream file to disk in chunks enforcing maximum file size
+        max_bytes = settings.max_audio_file_size_bytes
+        bytes_written = 0
+        chunk_size = 64 * 1024
+
         with open(temp_upload_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+            while chunk := file.file.read(chunk_size):
+                bytes_written += len(chunk)
+                if bytes_written > max_bytes:
+                    raise InvalidAudioFileException(
+                        f"The file is too large. Maximum size is {settings.MAX_AUDIO_FILE_SIZE_MB} MB.",
+                        status_code=413
+                    )
+                buffer.write(chunk)
+
+        if bytes_written == 0:
+            raise InvalidAudioFileException("Uploaded file cannot be empty", status_code=400)
 
         # 3. Prepare audio (extracts audio track via FFmpeg if video)
         transcribe_path, extracted_audio_to_clean, effective_name = (

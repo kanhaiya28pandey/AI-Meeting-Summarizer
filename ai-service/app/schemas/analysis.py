@@ -6,16 +6,19 @@ class ActionItem(BaseModel):
     task: str = Field(
         ...,
         min_length=1,
+        max_length=1000,
         description="Actionable task or deliverable explicitly identified in the transcript",
         examples=["Complete payment testing"]
     )
     owner: Optional[str] = Field(
         default=None,
+        max_length=200,
         description="Explicit assignee/owner identified in the transcript; null if not explicitly assigned",
         examples=["Rahul"]
     )
     deadline: Optional[str] = Field(
         default=None,
+        max_length=200,
         description="Explicit due date or timeframe identified in the transcript; null if not explicitly mentioned",
         examples=["Thursday"]
     )
@@ -58,14 +61,17 @@ class MeetingAnalysisResponse(BaseModel):
     summary: str = Field(
         ...,
         min_length=1,
+        max_length=5000,
         description="Concise factual summary of the meeting discussion"
     )
     key_decisions: list[str] = Field(
         default_factory=list,
+        max_length=50,
         description="Explicit decisions agreed upon during the meeting; empty array if none"
     )
     action_items: list[ActionItem] = Field(
         default_factory=list,
+        max_length=50,
         description="Explicit action items and deliverables; empty array if none"
     )
 

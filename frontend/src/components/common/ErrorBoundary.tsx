@@ -29,8 +29,8 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div style={{ padding: '2rem', maxWidth: '600px', margin: '4rem auto' }}>
           <ErrorState
-            title="Application Error"
-            message={this.state.error?.message || 'An unexpected rendering error occurred.'}
+            title="Something went wrong"
+            message="We couldn't display this page correctly. Please refresh and try again."
             onRetry={() => window.location.reload()}
           />
         </div>

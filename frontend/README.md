@@ -91,7 +91,17 @@ Available variables:
 
 ---
 
-## 5. Development & Build Scripts
+## 5. Security & Error Resilience (Phase 16)
+
+- **Plain-text Rendering**: AI summary, transcript, decisions, and action items are rendered as pure React strings with zero `dangerouslySetInnerHTML` usage.
+- **Error Boundary**: Top-level `ErrorBoundary` catches unexpected component render exceptions and presents a friendly recovery UI with a "Refresh" action without exposing stack traces.
+- **Single-Submission Defense**: File upload button and form submissions are disabled while an upload is in-flight.
+- **Safe Polling & Cleanup**: `useMeetingProcessing` cleans up active timer intervals on unmount, page transitions, and terminal states (`COMPLETED` or `FAILED`).
+- **No Client Secrets**: No API keys, passwords, or cloud credentials are stored in or accessible to the browser client.
+
+---
+
+## 6. Development & Build Scripts
 
 In the `frontend` directory:
 

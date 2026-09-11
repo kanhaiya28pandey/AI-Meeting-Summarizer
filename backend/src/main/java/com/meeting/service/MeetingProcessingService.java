@@ -26,6 +26,7 @@ public class MeetingProcessingService {
     private final MeetingRepository meetingRepository;
     private final AiServiceClient aiServiceClient;
     private final TemporaryFileService temporaryFileService;
+    private final java.util.Set<UUID> activeProcessingIds = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     public MeetingProcessingService(
             MeetingRepository meetingRepository,
@@ -42,6 +43,16 @@ public class MeetingProcessingService {
      * UPLOADED -> TRANSCRIBING -> ANALYZING -> SAVING -> COMPLETED (or FAILED on error).
      */
     public void executeProcessingPipeline(UUID meetingId, Path tempAudioPath, String originalFilename) {
+        if (meetingId == null) {
+            return;
+        }
+
+        // Concurrency guard: only one worker thread per meetingId
+        if (!activeProcessingIds.add(meetingId)) {
+            log.warn("Meeting id={} is already being processed by an active thread. Skipping duplicate run.", meetingId);
+            return;
+        }
+
         long startTime = System.currentTimeMillis();
         log.info("Meeting processing started: {}", meetingId);
 
@@ -154,6 +165,7 @@ public class MeetingProcessingService {
                 }
             }
         } finally {
+            activeProcessingIds.remove(meetingId);
             if (tempAudioPath != null) {
                 temporaryFileService.deleteTemporaryFile(tempAudioPath);
             }
