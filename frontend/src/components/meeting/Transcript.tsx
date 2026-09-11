@@ -2,6 +2,7 @@ import { useState, type FC } from 'react';
 import { FileText, Copy, Check } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
+import { useToast } from '../ui';
 
 interface TranscriptProps {
   transcript: string | null | undefined;
@@ -9,12 +10,14 @@ interface TranscriptProps {
 
 export const Transcript: FC<TranscriptProps> = ({ transcript }) => {
   const [copied, setCopied] = useState(false);
+  const { success: toastSuccess } = useToast();
 
   const handleCopy = async () => {
     if (!transcript) return;
     try {
       await navigator.clipboard.writeText(transcript);
       setCopied(true);
+      toastSuccess('Transcript copied to clipboard');
       setTimeout(() => setCopied(false), 2000);
     } catch {
       setCopied(false);
@@ -111,7 +114,7 @@ export const Transcript: FC<TranscriptProps> = ({ transcript }) => {
             fontSize: '0.9rem',
           }}
         >
-          No transcript available for this meeting.
+          No transcript is available.
         </div>
       )}
     </Card>

@@ -2,6 +2,7 @@ import { useState, type FC } from 'react';
 import { Sparkles, Copy, Check } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
+import { useToast } from '../ui';
 
 interface MeetingSummaryProps {
   summary: string | null | undefined;
@@ -9,12 +10,14 @@ interface MeetingSummaryProps {
 
 export const MeetingSummary: FC<MeetingSummaryProps> = ({ summary }) => {
   const [copied, setCopied] = useState(false);
+  const { success: toastSuccess } = useToast();
 
   const handleCopy = async () => {
     if (!summary) return;
     try {
       await navigator.clipboard.writeText(summary);
       setCopied(true);
+      toastSuccess('Summary copied to clipboard');
       setTimeout(() => setCopied(false), 2000);
     } catch {
       // Fallback if clipboard API is restricted

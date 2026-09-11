@@ -170,7 +170,7 @@ export const ActionItems: FC<ActionItemsProps> = ({ actionItems }) => {
             margin: 'auto 0',
           }}
         >
-          No action items were identified for this meeting.
+          No action items were identified.
         </div>
       )}
     </Card>

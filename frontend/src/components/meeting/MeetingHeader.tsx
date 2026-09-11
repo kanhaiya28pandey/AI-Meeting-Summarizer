@@ -61,16 +61,6 @@ export const MeetingHeader: FC<MeetingHeaderProps> = ({
             </h1>
             <Badge status={meeting.status} />
           </div>
-          <p
-            style={{
-              fontSize: '0.82rem',
-              color: 'var(--text-muted)',
-              fontFamily: 'var(--font-mono)',
-              marginTop: '0.35rem',
-            }}
-          >
-            ID: {meeting.id}
-          </p>
         </div>
 
         {onNewUpload && (

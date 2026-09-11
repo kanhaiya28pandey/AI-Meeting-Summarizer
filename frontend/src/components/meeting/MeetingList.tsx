@@ -26,14 +26,14 @@ export const MeetingList: FC<MeetingListProps> = ({
       <EmptyState
         icon={<ListFilter size={32} />}
         title="No meetings yet"
-        description="Upload your first meeting recording to automatically generate a clear summary, key decisions, and action items."
+        description="Upload your first meeting to generate a transcript, summary, decisions, and action items."
         action={
           <Button
             variant="primary"
             icon={<Plus size={16} />}
             onClick={() => navigate('/')}
           >
-            Upload Your First Meeting
+            Upload Meeting
           </Button>
         }
       />

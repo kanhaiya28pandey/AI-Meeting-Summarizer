@@ -5,14 +5,17 @@ import type { Meeting } from '../types/meeting';
 import { api } from '../services/api';
 import { getFriendlyErrorMessage } from '../utils/apiError';
 import { PageHeader } from '../components/ui/PageHeader';
-import { Button } from '../components/ui/Button';
-import { ErrorState } from '../components/ui/ErrorState';
-import { Card } from '../components/ui/Card';
+import { Button, Card, Skeleton, ErrorState, useToast } from '../components/ui';
 import { MeetingList } from '../components/meeting/MeetingList';
 import { ConfirmDialog } from '../components/common/ConfirmDialog';
 
 export const Meetings: FC = () => {
   const navigate = useNavigate();
+  const { success: toastSuccess } = useToast();
+
+  useEffect(() => {
+    document.title = 'My Meetings | AI Meeting Summarizer';
+  }, []);
 
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -80,6 +83,7 @@ export const Meetings: FC = () => {
       // Immediate removal from list upon 204 No Content
       setMeetings((prev) => prev.filter((m) => m.id !== targetId));
       setDeleteTarget(null);
+      toastSuccess?.('Meeting deleted successfully');
     } catch (err) {
       setDeleteError(
         typeof err === 'object' && err !== null && 'message' in err
@@ -185,52 +189,23 @@ export const Meetings: FC = () => {
               key={i}
               padding="lg"
               style={{
-                height: '260px',
+                height: '240px',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
                 border: '1px solid var(--border)',
                 backgroundColor: 'var(--bg-surface)',
-                opacity: 0.7,
               }}
             >
               <div>
-                <div
-                  style={{
-                    height: '20px',
-                    width: '60%',
-                    backgroundColor: 'var(--border)',
-                    borderRadius: 'var(--radius-sm)',
-                    marginBottom: '1rem',
-                  }}
-                />
-                <div
-                  style={{
-                    height: '14px',
-                    width: '40%',
-                    backgroundColor: 'var(--border-subtle)',
-                    borderRadius: 'var(--radius-sm)',
-                    marginBottom: '1.25rem',
-                  }}
-                />
-                <div
-                  style={{
-                    height: '60px',
-                    width: '100%',
-                    backgroundColor: 'var(--bg-canvas)',
-                    borderRadius: 'var(--radius-md)',
-                  }}
-                />
+                <Skeleton width="65%" height="22px" style={{ marginBottom: '0.75rem' }} />
+                <Skeleton width="45%" height="15px" style={{ marginBottom: '1.25rem' }} />
+                <Skeleton width="100%" height="45px" borderRadius="var(--radius-md)" />
               </div>
-              <div
-                style={{
-                  height: '24px',
-                  width: '30%',
-                  backgroundColor: 'var(--border-subtle)',
-                  borderRadius: 'var(--radius-sm)',
-                  marginTop: '1rem',
-                }}
-              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
+                <Skeleton width="80px" height="24px" borderRadius="var(--radius-full)" />
+                <Skeleton width="65px" height="28px" borderRadius="var(--radius-md)" />
+              </div>
             </Card>
           ))}
         </div>

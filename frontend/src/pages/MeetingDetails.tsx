@@ -1,4 +1,4 @@
-import type { FC } from 'react';
+import { useEffect, type FC } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, AlertTriangle } from 'lucide-react';
 import { Button } from '../components/ui/Button';
@@ -13,6 +13,10 @@ import { useMeetingProcessing } from '../hooks/useMeetingProcessing';
 export const MeetingDetails: FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = 'Meeting Details | AI Meeting Summarizer';
+  }, []);
 
   const { meeting, loading, error, isProcessing } = useMeetingProcessing(id);
 
@@ -105,7 +109,7 @@ export const MeetingDetails: FC = () => {
                     marginBottom: '0.35rem',
                   }}
                 >
-                  Processing Failed
+                  We couldn't finish processing this meeting
                 </h3>
                 <p
                   style={{
@@ -115,7 +119,7 @@ export const MeetingDetails: FC = () => {
                     marginBottom: '1rem',
                   }}
                 >
-                  We couldn't complete automated transcription or analysis for this recording. Your meeting record remains saved, but processing did not finish.
+                  Your meeting record is still saved, but the processing pipeline encountered an error.
                 </p>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                   <Button

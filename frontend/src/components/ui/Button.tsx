@@ -1,13 +1,14 @@
 import React from 'react';
 import { Loader2 } from 'lucide-react';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
+export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   size?: ButtonSize;
   loading?: boolean;
+  loadingText?: string;
   icon?: React.ReactNode;
 }
 
@@ -16,6 +17,7 @@ export const Button: React.FC<ButtonProps> = ({
   variant = 'primary',
   size = 'md',
   loading = false,
+  loadingText,
   icon,
   disabled,
   className = '',
@@ -66,7 +68,12 @@ export const Button: React.FC<ButtonProps> = ({
       backgroundColor: 'var(--bg-surface)',
       color: 'var(--text-primary)',
       borderColor: 'var(--border)',
-      boxShadow: 'var(--shadow-sm)',
+      boxShadow: 'var(--shadow-xs)',
+    },
+    outline: {
+      backgroundColor: 'transparent',
+      color: 'var(--primary)',
+      borderColor: 'var(--primary)',
     },
     ghost: {
       backgroundColor: 'transparent',
@@ -90,7 +97,7 @@ export const Button: React.FC<ButtonProps> = ({
     <button
       disabled={isDisabled}
       style={combinedStyles}
-      className={className}
+      className={`btn btn-${variant} ${className}`}
       {...rest}
     >
       {loading ? (
@@ -98,7 +105,7 @@ export const Button: React.FC<ButtonProps> = ({
       ) : (
         icon
       )}
-      {children}
+      {loading && loadingText ? loadingText : children}
     </button>
   );
 };

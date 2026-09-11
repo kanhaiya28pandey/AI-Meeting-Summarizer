@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HelpCircle, Home } from 'lucide-react';
 import { Button } from '../components/ui/Button';
@@ -6,6 +6,10 @@ import { Card } from '../components/ui/Card';
 
 export const NotFound: React.FC = () => {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = 'Page Not Found | AI Meeting Summarizer';
+  }, []);
 
   return (
     <div

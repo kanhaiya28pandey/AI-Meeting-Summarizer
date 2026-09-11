@@ -122,7 +122,7 @@ export const KeyDecisions: FC<KeyDecisionsProps> = ({ decisions }) => {
             margin: 'auto 0',
           }}
         >
-          No key decisions were identified for this meeting.
+          No key decisions were identified.
         </div>
       )}
     </Card>

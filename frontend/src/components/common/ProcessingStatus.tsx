@@ -213,6 +213,27 @@ export const ProcessingStatus: FC<ProcessingStatusProps> = ({
           );
         })}
       </div>
+
+      {/* Waiting Reassurance Banner */}
+      {!isFailed && status !== 'COMPLETED' && (
+        <div
+          style={{
+            marginTop: '1.75rem',
+            padding: '0.875rem 1rem',
+            borderRadius: 'var(--radius-md)',
+            backgroundColor: 'var(--bg-canvas)',
+            border: '1px solid var(--border)',
+            fontSize: '0.825rem',
+            color: 'var(--text-secondary)',
+            lineHeight: 1.5,
+          }}
+        >
+          <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+            Your meeting is being processed.
+          </span>{' '}
+          This may take a few minutes depending on the recording length. You can keep this page open while we work.
+        </div>
+      )}
     </Card>
   );
 };

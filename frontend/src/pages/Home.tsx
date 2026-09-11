@@ -1,10 +1,13 @@
-import type React from 'react';
+import React, { useEffect } from 'react';
 import { Upload, Mic, Sparkles, CheckCircle2 } from 'lucide-react';
-import { PageHeader } from '../components/ui/PageHeader';
 import { Card } from '../components/ui/Card';
 import { UploadCard } from '../components/common/UploadCard';
 
 export const Home: React.FC = () => {
+  useEffect(() => {
+    document.title = 'AI Meeting Summarizer';
+  }, []);
+
   const workflowSteps = [
     {
       step: '1',
@@ -15,14 +18,14 @@ export const Home: React.FC = () => {
     {
       step: '2',
       title: 'AI Transcription',
-      desc: 'Gemini 3.5 Transcribe converts speech to accurate text with timestamps.',
+      desc: 'Speech-to-text converts meeting audio into formatted text with timestamps.',
       icon: <Mic size={20} style={{ color: '#8b5cf6' }} />,
     },
     {
       step: '3',
       title: 'Intelligent Analysis',
-      desc: 'Gemini extracts concise summaries, key decisions, and action items.',
-      icon: <Sparkles size={20} style={{ color: '#ec4899' }} />,
+      desc: 'Gemini AI extracts a concise summary, key decisions, and action items.',
+      icon: <Sparkles size={20} style={{ color: '#6366f1' }} />,
     },
     {
       step: '4',
@@ -34,13 +37,54 @@ export const Home: React.FC = () => {
 
   return (
     <div>
-      <PageHeader
-        title="Turn Meetings into Action"
-        description="Upload your meeting audio or video to generate automated transcripts, executive summaries, and action items powered by Gemini AI."
-      />
+      {/* Hero Section */}
+      <div style={{ textAlign: 'center', maxWidth: '780px', margin: '0 auto 2.5rem', paddingTop: '1rem' }}>
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            padding: '0.25rem 0.75rem',
+            borderRadius: 'var(--radius-full)',
+            backgroundColor: 'var(--primary-light)',
+            color: 'var(--primary-text)',
+            fontSize: '0.75rem',
+            fontWeight: 700,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            marginBottom: '1rem',
+          }}
+        >
+          <Sparkles size={12} />
+          <span>AI MEETING SUMMARIZER</span>
+        </div>
+        <h1
+          style={{
+            fontSize: '2.5rem',
+            fontWeight: 800,
+            color: 'var(--text-primary)',
+            letterSpacing: '-0.03em',
+            lineHeight: 1.15,
+            marginBottom: '1rem',
+          }}
+        >
+          Turn Meetings into Action
+        </h1>
+        <p
+          style={{
+            fontSize: '1.1rem',
+            color: 'var(--text-secondary)',
+            lineHeight: 1.6,
+            maxWidth: '620px',
+            margin: '0 auto',
+          }}
+        >
+          Transform meeting recordings into clear summaries, decisions, action items, and searchable transcripts.
+        </p>
+      </div>
 
-      {/* Upload Zone Placeholder */}
-      <div style={{ marginBottom: '3rem' }}>
+      {/* Upload Zone */}
+      <div style={{ marginBottom: '3.5rem' }}>
         <UploadCard />
       </div>
 

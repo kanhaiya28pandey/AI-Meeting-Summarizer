@@ -216,13 +216,41 @@ export const UploadCard: FC<UploadCardProps> = ({ className = '' }) => {
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.75rem',
+                      gap: '0.6rem',
                       fontSize: '0.8rem',
                       color: 'var(--text-secondary)',
                       marginTop: '0.2rem',
                     }}
                   >
                     <span>{formatFileSize(selectedFile.size)}</span>
+                    <span style={{ color: 'var(--border)' }}>•</span>
+                    <span
+                      style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        padding: '0.1rem 0.45rem',
+                        borderRadius: 'var(--radius-xs)',
+                        backgroundColor:
+                          selectedFile.name.toLowerCase().endsWith('.mp4') ||
+                          selectedFile.name.toLowerCase().endsWith('.mov') ||
+                          selectedFile.type.startsWith('video/')
+                            ? 'rgba(99, 102, 241, 0.1)'
+                            : 'rgba(16, 185, 129, 0.1)',
+                        color:
+                          selectedFile.name.toLowerCase().endsWith('.mp4') ||
+                          selectedFile.name.toLowerCase().endsWith('.mov') ||
+                          selectedFile.type.startsWith('video/')
+                            ? 'var(--primary)'
+                            : 'var(--status-success-text)',
+                      }}
+                    >
+                      {selectedFile.name.toLowerCase().endsWith('.mp4') ||
+                      selectedFile.name.toLowerCase().endsWith('.mov') ||
+                      selectedFile.type.startsWith('video/')
+                        ? 'Video'
+                        : 'Audio'}
+                    </span>
+                    <span style={{ color: 'var(--border)' }}>•</span>
                     <span
                       style={{
                         display: 'inline-flex',
@@ -274,22 +302,25 @@ export const UploadCard: FC<UploadCardProps> = ({ className = '' }) => {
 
         {/* 2. Meeting Title Input */}
         <div style={{ marginTop: '1.5rem' }}>
-          <label
-            htmlFor="meeting-title"
-            style={{
-              display: 'block',
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              color: 'var(--text-primary)',
-              marginBottom: '0.5rem',
-            }}
-          >
-            Meeting Title <span style={{ color: 'var(--status-error)' }}>*</span>
-          </label>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+            <label
+              htmlFor="meeting-title"
+              style={{
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                color: 'var(--text-primary)',
+              }}
+            >
+              Meeting Title <span style={{ color: 'var(--status-error)' }}>*</span>
+            </label>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              {title.length}/200
+            </span>
+          </div>
           <input
             id="meeting-title"
             type="text"
-            placeholder="e.g. Weekly Product Sync"
+            placeholder="e.g. Weekly Product Review"
             value={title}
             onChange={handleTitleChange}
             disabled={isUploading}

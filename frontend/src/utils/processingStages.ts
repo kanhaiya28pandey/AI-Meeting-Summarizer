@@ -23,23 +23,23 @@ export const PROCESSING_STAGES: StageDefinition[] = [
   },
   {
     status: 'TRANSCRIBING',
-    label: 'Transcribing audio',
-    description: 'Gemini 3.5 is converting meeting audio into verbatim text.',
+    label: 'Transcribing',
+    description: 'Converting your meeting into text...',
   },
   {
     status: 'ANALYZING',
-    label: 'Analyzing meeting',
-    description: 'Gemini AI is extracting executive summary, decisions, and action items.',
+    label: 'AI Analysis',
+    description: 'Extracting summary and action items...',
   },
   {
     status: 'SAVING',
-    label: 'Saving results',
-    description: 'Persisting transcript and structured intelligence to database.',
+    label: 'Saving',
+    description: 'Preparing your results...',
   },
   {
     status: 'COMPLETED',
-    label: 'Completed',
-    description: 'Processing complete! Your meeting notes and action items are ready.',
+    label: 'Meeting ready',
+    description: 'Your meeting notes, summary, and action items are ready.',
   },
 ];
 

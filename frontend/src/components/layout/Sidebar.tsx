@@ -20,6 +20,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     { to: '/settings', label: 'Settings', icon: <Settings size={18} /> },
   ];
 
+  // Close mobile sidebar on Escape key press
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   return (
     <>
       {/* Mobile overlay backdrop */}
@@ -72,12 +84,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 width: '34px',
                 height: '34px',
                 borderRadius: 'var(--radius-md)',
-                background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
+                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
                 color: '#ffffff',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 2px 8px rgba(99, 102, 241, 0.4)',
+                boxShadow: '0 2px 8px rgba(99, 102, 241, 0.35)',
               }}
             >
               <Sparkles size={18} />
@@ -87,22 +99,23 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 style={{
                   color: '#ffffff',
                   fontWeight: 700,
-                  fontSize: '0.95rem',
+                  fontSize: '0.925rem',
                   letterSpacing: '-0.01em',
                   lineHeight: 1.2,
                 }}
               >
-                Summarizer
+                AI Meeting
               </div>
               <div
                 style={{
-                  fontSize: '0.7rem',
-                  color: '#94a3b8',
-                  letterSpacing: '0.04em',
-                  textTransform: 'uppercase',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  color: '#a5b4fc',
+                  letterSpacing: '0.02em',
+                  lineHeight: 1.2,
                 }}
               >
-                AI Assistant
+                Summarizer
               </div>
             </div>
           </div>
