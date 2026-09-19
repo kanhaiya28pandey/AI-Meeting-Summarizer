@@ -122,19 +122,26 @@ class TranscriptionService:
         try:
             # 1. Upload audio file to Gemini Files API
             try:
-                uploaded_file = client.files.upload(
-                    file=file_path,
-                    mime_type=mime_type,
-                )
+                try:
+                    uploaded_file = client.files.upload(
+                        file=file_path,
+                        config=types.UploadFileConfig(mime_type=mime_type),
+                    )
+                except TypeError:
+                    uploaded_file = client.files.upload(
+                        file=file_path,
+                        mime_type=mime_type,
+                    )
                 logger.info("Successfully uploaded file to Gemini Files API: name=%s", getattr(uploaded_file, "name", "unknown"))
             except Exception as e:
-                logger.error("Failed to upload audio to Gemini Files API: %s", type(e).__name__)
+                logger.error("Failed to upload audio to Gemini Files API: %s (%s)", type(e).__name__, str(e))
                 raise TranscriptionException(
                     detail="Failed to upload audio to AI service Files API",
                     status_code=503
                 ) from e
 
-            # 2. Invoke Gemini 3.5 Transcribe
+            # 2. Invoke Gemini Transcribe (Primary or Fallback)
+            response = None
             try:
                 config = types.GenerateContentConfig(
                     audio_transcription_config=types.AudioTranscriptionConfig(
@@ -149,22 +156,56 @@ class TranscriptionService:
                     contents=[uploaded_file],
                     config=config,
                 )
-            except errors.APIError as e:
-                logger.error("Gemini transcription API error: %s", getattr(e, "message", str(e)))
-                raise TranscriptionException(
-                    detail="Transcription service is temporarily unavailable",
-                    status_code=503
-                ) from e
-            except Exception as e:
-                logger.error("Unexpected error during Gemini audio transcription: %s", type(e).__name__)
-                raise TranscriptionException(
-                    detail="An unexpected error occurred during transcription",
-                    status_code=503
-                ) from e
+            except Exception as primary_err:
+                logger.warning(
+                    "Primary audio transcription with model=%s failed (%s: %s). Attempting fallback with %s.",
+                    self.model,
+                    type(primary_err).__name__,
+                    str(primary_err),
+                    settings.GEMINI_MODEL,
+                )
+                try:
+                    response = client.models.generate_content(
+                        model=settings.GEMINI_MODEL,
+                        contents=[
+                            uploaded_file,
+                            "Please provide a complete, verbatim transcript of the audio in this recording. Output only the transcription without commentary.",
+                        ],
+                    )
+                except errors.APIError as e:
+                    logger.error("Gemini transcription API error: %s", getattr(e, "message", str(e)))
+                    raise TranscriptionException(
+                        detail="Transcription service is temporarily unavailable",
+                        status_code=503
+                    ) from e
+                except Exception as e:
+                    logger.error("Unexpected error during Gemini audio transcription: %s", type(e).__name__)
+                    raise TranscriptionException(
+                        detail="An unexpected error occurred during transcription",
+                        status_code=503
+                    ) from e
 
             # 3. Parse transcript and segments
             transcript_text = getattr(response, "text", "") or ""
             segments = self._parse_segments(response)
+
+            if not transcript_text and segments:
+                transcript_text = " ".join(s.text for s in segments if s.text).strip()
+
+            if not transcript_text:
+                for candidate in getattr(response, "candidates", []) or []:
+                    for part in getattr(getattr(candidate, "content", None), "parts", []) or []:
+                        if getattr(part, "text", None) and str(part.text).strip():
+                            transcript_text = str(part.text).strip()
+                            break
+                        at = getattr(part, "audio_transcription", None)
+                        if at and getattr(at, "text", None) and str(at.text).strip():
+                            transcript_text = str(at.text).strip()
+                            break
+
+            # If no speech was detected at all (silence or non-vocal audio)
+            if not transcript_text or not transcript_text.strip():
+                transcript_text = "[No audible speech detected in recording]"
 
             detected_language = getattr(response, "language", None)
 
