@@ -1,5 +1,5 @@
 import React from 'react';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { Menu, LogOut, LogIn, UserPlus } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -9,6 +9,7 @@ export interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
 
   const getPageTitle = () => {
@@ -174,7 +175,10 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
             </Link>
 
             <button
-              onClick={logout}
+              onClick={() => {
+                logout();
+                navigate('/');
+              }}
               title="Sign Out"
               aria-label="Sign out"
               style={{

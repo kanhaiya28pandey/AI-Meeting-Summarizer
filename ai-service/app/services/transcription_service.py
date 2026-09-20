@@ -11,6 +11,7 @@ from app.core.config import settings
 from app.schemas.transcription import TranscriptSegment, TranscriptionResponse
 from app.services.ffmpeg_service import ffmpeg_service
 from app.services.gemini_service import gemini_service
+from app.services.transcription_prompts import VERBATIM_TRANSCRIPTION_INSTRUCTION
 from app.utils.exceptions import (
     AudioFileTooLargeException,
     GeminiConfigurationError,
@@ -191,6 +192,7 @@ class TranscriptionService:
             response = None
             try:
                 config = types.GenerateContentConfig(
+                    system_instruction=VERBATIM_TRANSCRIPTION_INSTRUCTION,
                     audio_transcription_config=types.AudioTranscriptionConfig(
                         mode="VERBATIM",
                         diarization=settings.TRANSCRIPTION_ENABLE_DIARIZATION,
@@ -200,7 +202,7 @@ class TranscriptionService:
 
                 response = client.models.generate_content(
                     model=self.model,
-                    contents=[uploaded_file],
+                    contents=[uploaded_file, VERBATIM_TRANSCRIPTION_INSTRUCTION],
                     config=config,
                 )
             except Exception as primary_err:
@@ -219,15 +221,11 @@ class TranscriptionService:
                             model=fb_model,
                             contents=[
                                 uploaded_file,
-                                (
-                                    "Please provide an accurate, verbatim transcript of the audio recording. "
-                                    "Divide the conversation person-by-person (turn-by-turn) with clear speaker labels "
-                                    "(e.g., 'Speaker 1:', 'Speaker 2:' or names if mentioned in the recording). "
-                                    "Put a blank line between each speaker's turn. "
-                                    "If only one person is speaking throughout the entire recording, use 'Speaker 1:' for their speech. "
-                                    "Output only the transcription without commentary."
-                                ),
+                                VERBATIM_TRANSCRIPTION_INSTRUCTION,
                             ],
+                            config=types.GenerateContentConfig(
+                                system_instruction=VERBATIM_TRANSCRIPTION_INSTRUCTION
+                            ),
                         )
                         if response:
                             break

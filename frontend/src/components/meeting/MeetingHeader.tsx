@@ -1,10 +1,11 @@
 import type { FC } from 'react';
-import { ArrowLeft, Plus, Calendar, Clock, FileAudio, HardDrive } from 'lucide-react';
+import { ArrowLeft, Plus, Calendar, Clock, FileAudio, HardDrive, FileDown, Printer } from 'lucide-react';
 import type { Meeting } from '../../types/meeting';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { formatDate } from '../../utils/formatDate';
 import { formatDuration } from '../../utils/formatDuration';
+import { exportMeetingToMarkdown, exportMeetingToPdf } from '../../utils/exportMeeting';
 
 interface MeetingHeaderProps {
   meeting: Meeting;
@@ -21,7 +22,7 @@ export const MeetingHeader: FC<MeetingHeaderProps> = ({
     <header style={{ marginBottom: '2rem' }}>
       {/* Back button */}
       {onBack && (
-        <div style={{ marginBottom: '1rem' }}>
+        <div style={{ marginBottom: '1rem' }} className="no-print">
           <Button
             variant="ghost"
             size="sm"
@@ -63,16 +64,41 @@ export const MeetingHeader: FC<MeetingHeaderProps> = ({
           </div>
         </div>
 
-        {onNewUpload && (
-          <Button
-            variant="secondary"
-            size="sm"
-            icon={<Plus size={15} />}
-            onClick={onNewUpload}
-          >
-            New Upload
-          </Button>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', flexWrap: 'wrap' }} className="no-print">
+          {meeting.status === 'COMPLETED' && (
+            <>
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<FileDown size={15} />}
+                onClick={() => exportMeetingToMarkdown(meeting)}
+                title="Download meeting summary and transcript as Markdown (.md)"
+              >
+                Export Markdown
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<Printer size={15} />}
+                onClick={() => exportMeetingToPdf()}
+                title="Print or Save as PDF"
+              >
+                Export PDF
+              </Button>
+            </>
+          )}
+
+          {onNewUpload && (
+            <Button
+              variant="primary"
+              size="sm"
+              icon={<Plus size={15} />}
+              onClick={onNewUpload}
+            >
+              New Upload
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Metadata Bar */}

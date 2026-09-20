@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { Home, FileText, Settings, Sparkles, X, LogOut } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -15,6 +15,7 @@ interface NavItem {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
+  const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
 
   const navItems: NavItem[] = [
@@ -257,7 +258,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               </NavLink>
 
               <button
-                onClick={logout}
+                onClick={() => {
+                  logout();
+                  onClose();
+                  navigate('/');
+                }}
                 title="Log Out"
                 aria-label="Log out"
                 style={{
@@ -279,30 +284,43 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           </div>
         )}
 
-        {/* Footer info */}
+        {/* Footer Enterprise Status */}
         <div
           style={{
-            padding: '0.65rem 1.25rem',
-            borderTop: '1px solid rgba(255, 255, 255, 0.05)',
-            fontSize: '0.7rem',
-            color: '#64748b',
+            padding: '0.75rem 1.25rem',
+            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+            fontSize: '0.75rem',
+            color: '#94a3b8',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
           }}
         >
-          <span>v1.0.0 (MVP)</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span
+              style={{
+                width: '7px',
+                height: '7px',
+                borderRadius: '50%',
+                backgroundColor: '#10b981',
+                boxShadow: '0 0 6px #10b981',
+                display: 'inline-block',
+              }}
+            />
+            <span style={{ fontWeight: 600, color: '#e2e8f0', letterSpacing: '0.01em' }}>Neural Engine</span>
+          </div>
           <span
             style={{
-              padding: '0.1rem 0.35rem',
+              padding: '0.15rem 0.45rem',
               borderRadius: 'var(--radius-full)',
-              backgroundColor: 'rgba(16, 185, 129, 0.15)',
-              color: '#34d399',
+              backgroundColor: 'rgba(99, 102, 241, 0.15)',
+              color: '#a5b4fc',
               fontWeight: 600,
-              fontSize: '0.65rem',
+              fontSize: '0.68rem',
+              border: '1px solid rgba(99, 102, 241, 0.25)',
             }}
           >
-            Connected
+            Enterprise AI
           </span>
         </div>
       </aside>

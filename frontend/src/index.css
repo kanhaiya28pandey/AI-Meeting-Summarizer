@@ -364,3 +364,50 @@ button {
   color: var(--primary-text);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.06);
 }
+
+/* Print Styles for Crisp PDF & Document Export */
+@media print {
+  body {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 11pt !important;
+  }
+
+  /* Hide UI chrome */
+  header,
+  aside,
+  .sidebar,
+  .no-print,
+  button,
+  .mobile-menu-trigger,
+  .header-ai-pill {
+    display: none !important;
+  }
+
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .meeting-details-container,
+  .container {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .card,
+  section {
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+    margin-bottom: 1.5rem !important;
+  }
+
+  a {
+    text-decoration: none !important;
+    color: inherit !important;
+  }
+}
