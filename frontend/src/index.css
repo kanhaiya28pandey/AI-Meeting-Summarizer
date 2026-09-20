@@ -96,12 +96,14 @@ html, body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
 #root {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
 /* Accessibility */
@@ -191,7 +193,7 @@ button {
   transition: margin-left 0.2s ease-in-out;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .app-main {
     margin-left: 0;
   }
@@ -202,18 +204,24 @@ button {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1rem 2rem 2rem;
 }
 
 @media (max-width: 1024px) {
   .page-container {
-    padding: 1.5rem;
+    padding: 1rem 1.5rem 1.5rem;
   }
 }
 
 @media (max-width: 640px) {
   .page-container {
-    padding: 1rem 0.75rem;
+    padding: 0.75rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .page-container {
+    padding: 0.5rem 0.4rem 1.25rem;
   }
 }
 

@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { FileAudio, Sparkles, CheckCircle2 } from 'lucide-react';
+import { UploadCloud, Mic, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Card } from '../components/ui/Card';
 import { UploadCard } from '../components/common/UploadCard';
 
 export const Home: React.FC = () => {
@@ -7,82 +8,92 @@ export const Home: React.FC = () => {
     document.title = 'AI Meeting Summarizer';
   }, []);
 
-  const featurePillars = [
+  const featureSteps = [
     {
-      icon: <FileAudio size={16} color="#6366f1" />,
-      title: 'Verbatim Transcription',
-      subtitle: 'Accurate speech-to-text & speakers',
+      step: '01',
+      title: 'Upload Recording',
+      desc: 'Drop in your meeting recording in MP3, WAV, M4A, MP4, or MOV format.',
+      icon: <UploadCloud size={20} color="#6366f1" />,
     },
     {
-      icon: <Sparkles size={16} color="#8b5cf6" />,
-      title: 'Executive Intelligence',
-      subtitle: 'Key decisions & strategic summary',
+      step: '02',
+      title: 'AI Transcription',
+      desc: 'Speech-to-text converts meeting audio into verbatim text with timestamps.',
+      icon: <Mic size={20} color="#8b5cf6" />,
     },
     {
-      icon: <CheckCircle2 size={16} color="#10b981" />,
-      title: 'Action Deliverables',
-      subtitle: 'Clear owners & assigned deadlines',
+      step: '03',
+      title: 'Intelligent Analysis',
+      desc: 'Neural AI models extract a concise summary, key decisions, and takeaways.',
+      icon: <Sparkles size={20} color="#6366f1" />,
+    },
+    {
+      step: '04',
+      title: 'Actionable Insights',
+      desc: 'Review structured meeting notes and track deliverables and deadlines.',
+      icon: <CheckCircle2 size={20} color="#10b981" />,
     },
   ];
 
   return (
-    <div className="home-viewport-container">
+    <div className="home-container">
       {/* Hero Section */}
-      <div className="home-hero-section">
-        <div className="home-hero-badge">
+      <div className="home-hero">
+        <div className="home-badge">
           <Sparkles size={13} />
           <span>AI MEETING SUMMARIZER</span>
         </div>
-        <h1 className="home-hero-title">
+        <h1 className="home-title">
           Turn Meetings into Action
         </h1>
-        <p className="home-hero-subtitle">
+        <p className="home-subtitle">
           Transform meeting audio and video into clear executive summaries, key decisions, and verbatim transcripts.
         </p>
       </div>
 
       {/* Upload Zone */}
-      <div className="home-upload-wrapper">
+      <div className="home-upload-section">
         <UploadCard />
       </div>
 
-      {/* Sleek Enterprise Feature Strip */}
-      <div className="home-feature-strip">
-        {featurePillars.map((pillar, idx) => (
-          <div key={idx} className="home-feature-item">
-            <div className="home-feature-icon-wrapper">
-              {pillar.icon}
-            </div>
-            <div className="home-feature-text">
-              <span className="home-feature-title">{pillar.title}</span>
-              <span className="home-feature-sub">{pillar.subtitle}</span>
-            </div>
-          </div>
-        ))}
+      {/* Feature Boxes below Analyze Meeting */}
+      <div className="home-features-section">
+        <div className="home-features-grid">
+          {featureSteps.map((s) => (
+            <Card key={s.step} padding="md" className="home-feature-card">
+              <div className="home-feature-card-header">
+                <div className="home-feature-icon-box">
+                  {s.icon}
+                </div>
+                <span className="home-feature-step">{s.step}</span>
+              </div>
+              <h3 className="home-feature-title">{s.title}</h3>
+              <p className="home-feature-desc">{s.desc}</p>
+            </Card>
+          ))}
+        </div>
       </div>
 
       <style>{`
-        .home-viewport-container {
-          max-width: 920px;
+        .home-container {
+          max-width: 1040px;
           margin: 0 auto;
+          padding: 0 0.5rem 1.25rem;
           display: flex;
           flex-direction: column;
-          justify-content: space-between;
-          padding: 1.25rem 1rem;
-          min-height: calc(100vh - var(--header-height) - 1rem);
-          box-sizing: border-box;
         }
 
-        .home-hero-section {
+        .home-hero {
           text-align: center;
-          margin-bottom: 1.25rem;
+          margin-top: 0;
+          margin-bottom: 1rem;
         }
 
-        .home-hero-badge {
+        .home-badge {
           display: inline-flex;
           align-items: center;
-          gap: 0.4rem;
-          padding: 0.2rem 0.7rem;
+          gap: 0.35rem;
+          padding: 0.22rem 0.75rem;
           border-radius: var(--radius-full);
           background-color: var(--primary-light);
           color: var(--primary-text);
@@ -90,98 +101,106 @@ export const Home: React.FC = () => {
           font-weight: 700;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          margin-bottom: 0.65rem;
+          margin-bottom: 0.4rem;
         }
 
-        .home-hero-title {
-          font-size: clamp(1.75rem, 3.5vw, 2.35rem);
+        .home-title {
+          font-size: clamp(1.85rem, 3.4vw, 2.45rem);
           font-weight: 800;
           color: var(--text-primary);
           letter-spacing: -0.03em;
           line-height: 1.15;
-          margin: 0 0 0.5rem;
+          margin: 0 0 0.4rem;
         }
 
-        .home-hero-subtitle {
-          font-size: clamp(0.875rem, 1.5vw, 1rem);
+        .home-subtitle {
+          font-size: clamp(0.925rem, 1.4vw, 1.05rem);
           color: var(--text-secondary);
           line-height: 1.5;
-          max-width: 580px;
+          max-width: 680px;
           margin: 0 auto;
         }
 
-        .home-upload-wrapper {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-bottom: 1.25rem;
+        .home-upload-section {
+          margin-bottom: 1.15rem;
         }
 
-        .home-upload-wrapper > * {
-          width: 100%;
+        .home-features-section {
+          margin-top: 0.25rem;
         }
 
-        .home-feature-strip {
+        .home-features-grid {
           display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 1rem;
-          padding-top: 0.5rem;
-          border-top: 1px solid var(--border-subtle);
+          grid-template-columns: repeat(4, 1fr);
+          gap: 0.85rem;
         }
 
-        .home-feature-item {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          padding: 0.65rem 0.85rem;
-          background-color: var(--bg-surface);
+        .home-feature-card {
           border: 1px solid var(--border);
           border-radius: var(--radius-lg);
-          transition: all 0.2s ease;
+          background-color: var(--bg-surface);
+          transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
         }
 
-        .home-feature-item:hover {
+        .home-feature-card:hover {
+          transform: translateY(-2px);
           border-color: rgba(99, 102, 241, 0.35);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
         }
 
-        .home-feature-icon-wrapper {
-          width: 32px;
-          height: 32px;
+        .home-feature-card-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 0.6rem;
+        }
+
+        .home-feature-icon-box {
+          width: 36px;
+          height: 36px;
           border-radius: var(--radius-md);
           background-color: var(--primary-light);
           display: flex;
           align-items: center;
           justify-content: center;
-          flex-shrink: 0;
         }
 
-        .home-feature-text {
-          display: flex;
-          flex-direction: column;
-          line-height: 1.25;
+        .home-feature-step {
+          font-size: 0.8rem;
+          font-weight: 700;
+          color: var(--text-muted);
+          letter-spacing: 0.05em;
         }
 
         .home-feature-title {
-          font-size: 0.825rem;
+          font-size: 0.925rem;
           font-weight: 600;
           color: var(--text-primary);
+          margin-bottom: 0.3rem;
+          line-height: 1.25;
         }
 
-        .home-feature-sub {
-          font-size: 0.725rem;
-          color: var(--text-muted);
+        .home-feature-desc {
+          font-size: 0.8rem;
+          color: var(--text-secondary);
+          line-height: 1.45;
+          margin: 0;
         }
 
-        @media (max-width: 768px) {
-          .home-viewport-container {
-            min-height: auto;
-            padding: 1rem 0.5rem;
+        @media (max-width: 900px) {
+          .home-features-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.85rem;
           }
-          .home-feature-strip {
+        }
+
+        @media (max-width: 560px) {
+          .home-features-grid {
             grid-template-columns: 1fr;
-            gap: 0.625rem;
+            gap: 0.75rem;
+          }
+          .home-container {
+            padding: 0 0.25rem 1.5rem;
           }
         }
       `}</style>

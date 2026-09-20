@@ -157,7 +157,7 @@ export const UploadCard: FC<UploadCardProps> = ({ className = '' }) => {
         backgroundColor: 'var(--bg-surface)',
         borderRadius: 'var(--radius-xl)',
         border: '1px solid var(--border)',
-        boxShadow: 'var(--shadow-md)',
+        boxShadow: '0 4px 20px -4px rgba(15, 23, 42, 0.08)',
       }}
     >
       <form onSubmit={handleSubmit} noValidate>
@@ -334,8 +334,8 @@ export const UploadCard: FC<UploadCardProps> = ({ className = '' }) => {
         )}
 
         {/* 2. Meeting Title Input */}
-        <div style={{ marginTop: '1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+        <div style={{ marginTop: '0.85rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
             <label
               htmlFor="meeting-title"
               style={{
@@ -353,30 +353,19 @@ export const UploadCard: FC<UploadCardProps> = ({ className = '' }) => {
           <input
             id="meeting-title"
             type="text"
-            placeholder="e.g. Weekly Product Review"
+            className="form-input"
             value={title}
             onChange={handleTitleChange}
+            placeholder="e.g. Weekly Product Review"
             disabled={isUploading}
             maxLength={200}
-            required
+            aria-required="true"
             aria-invalid={!!titleError}
-            aria-describedby={titleError ? 'title-error' : undefined}
-            style={{
-              width: '100%',
-              padding: '0.625rem 0.875rem',
-              fontSize: '0.925rem',
-              borderRadius: 'var(--radius-md)',
-              border: `1px solid ${titleError ? 'var(--status-error)' : 'var(--border)'}`,
-              backgroundColor: isUploading ? 'var(--bg-canvas)' : 'var(--bg-surface)',
-              color: 'var(--text-primary)',
-              boxSizing: 'border-box',
-              outline: 'none',
-              transition: 'border-color 0.15s ease',
-            }}
+            aria-describedby={titleError ? 'meeting-title-error' : undefined}
           />
           {titleError && (
             <p
-              id="title-error"
+              id="meeting-title-error"
               style={{
                 fontSize: '0.825rem',
                 color: 'var(--status-error)',
@@ -397,8 +386,8 @@ export const UploadCard: FC<UploadCardProps> = ({ className = '' }) => {
           <div
             role="alert"
             style={{
-              marginTop: '1.25rem',
-              padding: '1rem 1.25rem',
+              marginTop: '1rem',
+              padding: '0.85rem 1rem',
               borderRadius: 'var(--radius-md)',
               backgroundColor: 'var(--status-error-bg)',
               border: '1px solid var(--status-error-border)',
@@ -420,7 +409,7 @@ export const UploadCard: FC<UploadCardProps> = ({ className = '' }) => {
         )}
 
         {/* 5. Submit Button */}
-        <div style={{ marginTop: '1.75rem', display: 'flex', justifyContent: 'flex-end' }}>
+        <div className="upload-submit-row" style={{ marginTop: '1.25rem', display: 'flex', justifyContent: 'flex-end' }}>
           <Button
             type="submit"
             variant="primary"
@@ -428,12 +417,24 @@ export const UploadCard: FC<UploadCardProps> = ({ className = '' }) => {
             disabled={isUploading || !selectedFile}
             loading={isUploading}
             icon={<UploadCloud size={18} />}
-            style={{ minWidth: '170px' }}
+            style={{ minWidth: '180px', fontWeight: 600 }}
           >
             {isUploading ? 'Uploading...' : 'Analyze Meeting'}
           </Button>
         </div>
       </form>
+
+      <style>{`
+        @media (max-width: 520px) {
+          .upload-submit-row {
+            justify-content: stretch !important;
+          }
+          .upload-submit-row button {
+            width: 100% !important;
+            justify-content: center !important;
+          }
+        }
+      `}</style>
     </Card>
   );
 };

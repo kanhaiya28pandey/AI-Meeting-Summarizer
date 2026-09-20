@@ -12,10 +12,10 @@ import {
   Zap,
   Users,
   AlertCircle,
-  Cpu,
   Sparkles
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { Logo } from '../components/common/Logo';
 
 const COMMON_COUNTRIES = [
   { code: '+91', label: '+91 (India)' },
@@ -208,30 +208,8 @@ export const Signup: React.FC = () => {
 
           <div>
             {/* Brand Header */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-              <div
-                style={{
-                  width: '38px',
-                  height: '38px',
-                  borderRadius: '10px',
-                  background: 'linear-gradient(135deg, #10b981 0%, #6366f1 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)',
-                  flexShrink: 0,
-                }}
-              >
-                <Cpu size={20} color="#ffffff" />
-              </div>
-              <div>
-                <div style={{ fontWeight: 800, fontSize: '1.05rem', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
-                  AI Meeting
-                </div>
-                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#6ee7b7', letterSpacing: '0.04em' }}>
-                  Summarizer
-                </div>
-              </div>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <Logo size="lg" variant="hero" />
             </div>
 
             {/* Headline */}

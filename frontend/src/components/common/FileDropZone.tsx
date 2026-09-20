@@ -113,7 +113,7 @@ export const FileDropZone: FC<FileDropZoneProps> = ({
         border: `2px dashed ${isDragOver ? 'var(--primary)' : 'var(--border)'}`,
         borderRadius: 'var(--radius-lg)',
         backgroundColor: isDragOver ? 'var(--primary-light)' : 'var(--bg-canvas)',
-        padding: '2.5rem 1.5rem',
+        padding: '1.75rem 1.5rem',
         textAlign: 'center',
         cursor: disabled ? 'not-allowed' : 'pointer',
         transition: 'all 0.2s ease-in-out',
@@ -133,19 +133,19 @@ export const FileDropZone: FC<FileDropZoneProps> = ({
 
       <div
         style={{
-          width: '56px',
-          height: '56px',
+          width: '48px',
+          height: '48px',
           borderRadius: 'var(--radius-full)',
           backgroundColor: isDragOver ? 'var(--bg-surface)' : 'var(--primary-light)',
           color: 'var(--primary)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          margin: '0 auto 1rem',
+          margin: '0 auto 0.65rem',
           transition: 'all 0.2s ease',
         }}
       >
-        <UploadCloud size={28} />
+        <UploadCloud size={25} />
       </div>
 
       <h4
@@ -163,7 +163,7 @@ export const FileDropZone: FC<FileDropZoneProps> = ({
         style={{
           fontSize: '0.9rem',
           color: 'var(--text-secondary)',
-          marginBottom: '1rem',
+          marginBottom: '0.65rem',
         }}
       >
         Drag &amp; drop your audio or video here or <span style={{ color: 'var(--primary)', fontWeight: 600 }}>browse files</span>
@@ -173,17 +173,21 @@ export const FileDropZone: FC<FileDropZoneProps> = ({
         style={{
           display: 'inline-flex',
           alignItems: 'center',
-          gap: '0.375rem',
+          justifyContent: 'center',
+          flexWrap: 'wrap',
+          gap: '0.4rem',
+          maxWidth: '100%',
           fontSize: '0.78rem',
           color: 'var(--text-muted)',
           backgroundColor: 'var(--bg-surface)',
           padding: '0.3rem 0.75rem',
           borderRadius: 'var(--radius-full)',
           border: '1px solid var(--border)',
+          lineHeight: 1.4,
         }}
       >
-        <Music size={13} />
-        <span>MP3 • WAV • M4A • MP4 • MOV • Max 100 MB</span>
+        <Music size={13} style={{ flexShrink: 0 }} />
+        <span style={{ textAlign: 'center' }}>MP3 • WAV • M4A • MP4 • MOV • Max 100 MB</span>
       </div>
     </div>
   );

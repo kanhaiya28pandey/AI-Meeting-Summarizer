@@ -1,7 +1,8 @@
 import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, FileText, Settings, Sparkles, X, LogOut } from 'lucide-react';
+import { NavLink, useNavigate, Link } from 'react-router-dom';
+import { Home, FileText, Settings, X, LogOut } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { Logo } from '../common/Logo';
 
 export interface SidebarProps {
   isOpen: boolean;
@@ -89,47 +90,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div
-              style={{
-                width: '34px',
-                height: '34px',
-                borderRadius: 'var(--radius-md)',
-                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-                color: '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 2px 8px rgba(99, 102, 241, 0.35)',
-              }}
-            >
-              <Sparkles size={18} />
-            </div>
-            <div>
-              <div
-                style={{
-                  color: '#ffffff',
-                  fontWeight: 700,
-                  fontSize: '0.925rem',
-                  letterSpacing: '-0.01em',
-                  lineHeight: 1.2,
-                }}
-              >
-                AI Meeting
-              </div>
-              <div
-                style={{
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  color: '#a5b4fc',
-                  letterSpacing: '0.02em',
-                  lineHeight: 1.2,
-                }}
-              >
-                Summarizer
-              </div>
-            </div>
-          </div>
+          <Link to="/" onClick={onClose} style={{ textDecoration: 'none' }}>
+            <Logo size="md" variant="sidebar" />
+          </Link>
 
           {/* Close button on mobile */}
           <button
@@ -326,7 +289,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       </aside>
 
       <style>{`
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) {
           .sidebar {
             transform: translateX(-100%);
           }
@@ -337,7 +300,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             display: block !important;
           }
         }
-        @media (min-width: 769px) {
+        @media (min-width: 1025px) {
           .mobile-close-btn {
             display: none !important;
           }

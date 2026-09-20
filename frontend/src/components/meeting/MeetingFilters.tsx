@@ -30,6 +30,7 @@ export const MeetingFilters: React.FC<MeetingFiltersProps> = ({
 
   return (
     <div
+      className="meeting-filters-card"
       style={{
         backgroundColor: "var(--bg-surface)",
         border: "1px solid var(--border)",
@@ -39,9 +40,9 @@ export const MeetingFilters: React.FC<MeetingFiltersProps> = ({
         boxShadow: "var(--shadow-sm)",
       }}
     >
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.85rem", alignItems: "center" }}>
+      <div className="meeting-filters-row" style={{ display: "flex", flexWrap: "wrap", gap: "0.85rem", alignItems: "center" }}>
         {/* Search input */}
-        <div style={{ flex: "1 1 240px", position: "relative" }}>
+        <div className="meeting-filter-search" style={{ flex: "1 1 240px", position: "relative" }}>
           <span
             style={{
               position: "absolute",
@@ -95,8 +96,8 @@ export const MeetingFilters: React.FC<MeetingFiltersProps> = ({
         </div>
 
         {/* Date preset dropdown */}
-        <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-          <Calendar size={15} style={{ color: "var(--text-muted)" }} />
+        <div className="meeting-filter-group" style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+          <Calendar size={15} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
           <select
             value={dateFilter}
             onChange={(e) => onDateFilterChange(e.target.value as DateFilterPreset)}
@@ -109,6 +110,7 @@ export const MeetingFilters: React.FC<MeetingFiltersProps> = ({
               color: "var(--text-primary)",
               outline: "none",
               cursor: "pointer",
+              boxSizing: "border-box",
             }}
           >
             <option value="all">All Time</option>
@@ -120,8 +122,8 @@ export const MeetingFilters: React.FC<MeetingFiltersProps> = ({
         </div>
 
         {/* Status filter dropdown */}
-        <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-          <Filter size={15} style={{ color: "var(--text-muted)" }} />
+        <div className="meeting-filter-group" style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+          <Filter size={15} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
           <select
             value={statusFilter}
             onChange={(e) => onStatusFilterChange(e.target.value)}
@@ -134,6 +136,7 @@ export const MeetingFilters: React.FC<MeetingFiltersProps> = ({
               color: "var(--text-primary)",
               outline: "none",
               cursor: "pointer",
+              boxSizing: "border-box",
             }}
           >
             <option value="all">All Status</option>
@@ -147,6 +150,7 @@ export const MeetingFilters: React.FC<MeetingFiltersProps> = ({
         {hasActiveFilters && (
           <button
             onClick={onClearFilters}
+            className="meeting-filter-reset"
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -166,6 +170,25 @@ export const MeetingFilters: React.FC<MeetingFiltersProps> = ({
           </button>
         )}
       </div>
+
+      <style>{`
+        @media (max-width: 640px) {
+          .meeting-filter-search {
+            flex: 1 1 100% !important;
+            width: 100% !important;
+          }
+          .meeting-filter-group {
+            flex: 1 1 calc(50% - 0.5rem) !important;
+          }
+          .meeting-filter-group select {
+            width: 100% !important;
+          }
+          .meeting-filter-reset {
+            width: 100% !important;
+            justify-content: center !important;
+          }
+        }
+      `}</style>
 
       {/* Filter result summary badge */}
       {hasActiveFilters && (

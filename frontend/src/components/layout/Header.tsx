@@ -2,6 +2,7 @@ import React from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { Menu, LogOut, LogIn, UserPlus } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { LogoIcon } from '../common/Logo';
 
 export interface HeaderProps {
   onToggleSidebar: () => void;
@@ -46,7 +47,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
         zIndex: 30,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+      <div className="header-left-col" style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
         <button
           onClick={onToggleSidebar}
           aria-label="Open navigation menu"
@@ -64,6 +65,19 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
         >
           <Menu size={20} />
         </button>
+
+        <Link
+          to="/"
+          className="mobile-header-logo"
+          aria-label="Home"
+          style={{
+            display: 'none',
+            alignItems: 'center',
+            textDecoration: 'none',
+          }}
+        >
+          <LogoIcon size={26} />
+        </Link>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <span
@@ -251,21 +265,32 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
       </div>
 
       <style>{`
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) {
           header {
-            padding: 0 1rem !important;
+            padding: 0 1.25rem !important;
           }
           .mobile-menu-trigger {
+            display: flex !important;
+          }
+          .mobile-header-logo {
             display: flex !important;
           }
           .header-ai-pill {
             display: none !important;
           }
+        }
+        @media (max-width: 768px) {
           .header-user-info {
             display: none !important;
           }
         }
         @media (max-width: 520px) {
+          header {
+            padding: 0 0.65rem !important;
+          }
+          .header-left-col {
+            gap: 0.5rem !important;
+          }
           .header-logout-text {
             display: none !important;
           }
@@ -273,7 +298,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
             display: none !important;
           }
         }
-        @media (min-width: 1024px) {
+        @media (min-width: 1025px) {
           .desktop-breadcrumb {
             display: inline !important;
           }

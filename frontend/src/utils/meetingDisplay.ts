@@ -9,11 +9,25 @@ export function formatAudioFormat(fileType: string | null | undefined): string {
   return fileType.toUpperCase();
 }
 
+/**
+ * Strips raw markdown headers, bold asterisks, and hash artifacts from executive summaries.
+ */
+export function cleanSummaryMarkdown(text: string): string {
+  if (!text) return '';
+  return text
+    .replace(/^#+\s*(?:Executive\s+Overview|Overview|Summary|Meeting\s+Summary)?[\s:]*/gim, '')
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/[*_#`]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 export function getCardSummaryPreview(meeting: Meeting): string {
   if (meeting.status === 'COMPLETED') {
     if (meeting.summary && meeting.summary.trim().length > 0) {
-      const trimmed = meeting.summary.trim();
-      return trimmed.length > 180 ? `${trimmed.slice(0, 180)}...` : trimmed;
+      const cleaned = cleanSummaryMarkdown(meeting.summary);
+      const target = cleaned.length > 0 ? cleaned : meeting.summary.trim();
+      return target.length > 180 ? `${target.slice(0, 180)}...` : target;
     }
     return 'No summary available.';
   }

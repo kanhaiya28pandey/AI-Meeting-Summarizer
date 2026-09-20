@@ -19,52 +19,35 @@ export const MeetingHeader: FC<MeetingHeaderProps> = ({
   onNewUpload,
 }) => {
   return (
-    <header style={{ marginBottom: '2rem' }}>
-      {/* Back button */}
-      {onBack && (
-        <div style={{ marginBottom: '1rem' }} className="no-print">
-          <Button
-            variant="ghost"
-            size="sm"
-            icon={<ArrowLeft size={16} />}
-            onClick={onBack}
-            aria-label="Back to meetings list"
-          >
-            Back to Meetings
-          </Button>
-        </div>
-      )}
-
-      {/* Main Title Row */}
+    <header style={{ marginBottom: '1.75rem' }}>
+      {/* Top Navigation & Action Toolbar */}
       <div
+        className="no-print meeting-header-top-bar"
         style={{
           display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'flex-start',
+          alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
-          gap: '1rem',
-          marginBottom: '1.25rem',
+          gap: '0.75rem',
+          marginBottom: '1rem',
         }}
       >
-        <div style={{ flex: 1, minWidth: '260px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <h1
-              style={{
-                fontSize: '1.75rem',
-                fontWeight: 700,
-                color: 'var(--text-primary)',
-                letterSpacing: '-0.02em',
-                lineHeight: 1.2,
-              }}
+        <div>
+          {onBack && (
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={<ArrowLeft size={16} />}
+              onClick={onBack}
+              aria-label="Back to meetings list"
             >
-              {meeting.title || 'Untitled Meeting'}
-            </h1>
-            <Badge status={meeting.status} />
-          </div>
+              Back to Meetings
+            </Button>
+          )}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', flexWrap: 'wrap' }} className="no-print">
+        {/* Action Button Group */}
+        <div className="meeting-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
           {meeting.status === 'COMPLETED' && (
             <>
               <Button
@@ -101,8 +84,37 @@ export const MeetingHeader: FC<MeetingHeaderProps> = ({
         </div>
       </div>
 
+      {/* Main Title Row - Full width with word-wrap */}
+      <div style={{ marginBottom: '1.25rem' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            flexWrap: 'wrap',
+          }}
+        >
+          <h1
+            style={{
+              fontSize: 'clamp(1.35rem, 2.8vw, 1.85rem)',
+              fontWeight: 700,
+              color: 'var(--text-primary)',
+              letterSpacing: '-0.02em',
+              lineHeight: 1.25,
+              wordBreak: 'break-word',
+              overflowWrap: 'anywhere',
+              margin: 0,
+            }}
+          >
+            {meeting.title || 'Untitled Meeting'}
+          </h1>
+          <Badge status={meeting.status} />
+        </div>
+      </div>
+
       {/* Metadata Bar */}
       <div
+        className="meeting-header-metadata-bar"
         style={{
           display: 'flex',
           flexWrap: 'wrap',
@@ -119,6 +131,7 @@ export const MeetingHeader: FC<MeetingHeaderProps> = ({
       >
         {/* File Name */}
         <div
+          className="meta-filename"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -142,7 +155,7 @@ export const MeetingHeader: FC<MeetingHeaderProps> = ({
         </div>
 
         {/* Divider */}
-        <span style={{ color: 'var(--border)' }}>•</span>
+        <span className="meta-bullet" style={{ color: 'var(--border)' }}>•</span>
 
         {/* Audio Format */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
@@ -153,7 +166,7 @@ export const MeetingHeader: FC<MeetingHeaderProps> = ({
         </div>
 
         {/* Divider */}
-        <span style={{ color: 'var(--border)' }}>•</span>
+        <span className="meta-bullet" style={{ color: 'var(--border)' }}>•</span>
 
         {/* Duration */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
@@ -162,7 +175,7 @@ export const MeetingHeader: FC<MeetingHeaderProps> = ({
         </div>
 
         {/* Divider */}
-        <span style={{ color: 'var(--border)' }}>•</span>
+        <span className="meta-bullet" style={{ color: 'var(--border)' }}>•</span>
 
         {/* Created Date */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
@@ -170,6 +183,37 @@ export const MeetingHeader: FC<MeetingHeaderProps> = ({
           <span>Recorded: <strong>{formatDate(meeting.createdAt)}</strong></span>
         </div>
       </div>
+
+      <style>{`
+        @media (max-width: 640px) {
+          .meeting-header-top-bar {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 0.75rem !important;
+          }
+          .meeting-header-actions {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)) !important;
+            width: 100% !important;
+            gap: 0.5rem !important;
+          }
+          .meeting-header-actions button {
+            width: 100% !important;
+            justify-content: center !important;
+          }
+          .meeting-header-metadata-bar {
+            gap: 0.65rem !important;
+            padding: 0.75rem 0.85rem !important;
+          }
+          .meta-bullet {
+            display: none !important;
+          }
+          .meta-filename {
+            max-width: 100% !important;
+            width: 100% !important;
+          }
+        }
+      `}</style>
     </header>
   );
 };

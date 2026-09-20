@@ -36,6 +36,15 @@ describe('MeetingCard Helpers & Data Logic', () => {
     assert.equal(preview, 'The team reviewed sprint items and resolved blocker on auth.');
   });
 
+  it('strips markdown headings and artifacts from summary preview', () => {
+    const markdownMeeting: Meeting = {
+      ...sampleMeeting,
+      summary: '### Executive Overview The sprint goals were met ahead of schedule.',
+    };
+    const preview = getCardSummaryPreview(markdownMeeting);
+    assert.equal(preview, 'The sprint goals were met ahead of schedule.');
+  });
+
   it('truncates lengthy summaries over 180 characters', () => {
     const longSummary = 'A'.repeat(250);
     const meetingWithLongSummary: Meeting = {

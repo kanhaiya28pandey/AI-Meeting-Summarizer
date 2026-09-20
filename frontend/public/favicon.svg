@@ -1,6 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <rect width="32" height="32" rx="8" fill="#4F46E5"/>
-  <path d="M10 16a6 6 0 0 1 12 0v2a6 6 0 0 1-12 0v-2z" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
-  <path d="M7 16a9 9 0 0 0 18 0" stroke="#A5B4FC" stroke-width="2" stroke-linecap="round"/>
-  <line x1="16" y1="25" x2="16" y2="28" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44" fill="none">
+  <defs>
+    <linearGradient id="logoBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4F46E5"/>
+      <stop offset="55%" stop-color="#7C3AED"/>
+      <stop offset="100%" stop-color="#06B6D4"/>
+    </linearGradient>
+    <linearGradient id="logoWaveGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="1"/>
+    </linearGradient>
+  </defs>
+  <rect width="44" height="44" rx="12" fill="url(#logoBgGrad)"/>
+  <rect x="1" y="1" width="42" height="42" rx="11" fill="none" stroke="rgba(255, 255, 255, 0.28)" stroke-width="1.2"/>
+  <rect x="9.5" y="18" width="3.2" height="8" rx="1.6" fill="url(#logoWaveGrad)"/>
+  <rect x="15" y="12" width="3.2" height="20" rx="1.6" fill="url(#logoWaveGrad)"/>
+  <rect x="20.5" y="9" width="3.2" height="26" rx="1.6" fill="#FFFFFF"/>
+  <rect x="26" y="14" width="3.2" height="16" rx="1.6" fill="url(#logoWaveGrad)"/>
+  <rect x="31.5" y="19" width="3.2" height="6" rx="1.6" fill="url(#logoWaveGrad)"/>
+  <path d="M 11 22 C 16 16, 22 28, 33 22" stroke="#38BDF8" stroke-width="1.8" stroke-linecap="round" stroke-opacity="0.9"/>
+  <path d="M 22.1 4.5 Q 22.1 7.2 24.8 7.2 Q 22.1 7.2 22.1 9.9 Q 22.1 7.2 19.4 7.2 Q 22.1 7.2 22.1 4.5 Z" fill="#FEF08A"/>
 </svg>
