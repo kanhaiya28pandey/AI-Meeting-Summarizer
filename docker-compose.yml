@@ -75,6 +75,7 @@ services:
       AI_SERVICE_URL: http://ai-service:8000
       FRONTEND_URL: http://localhost:3000,http://localhost:5173
       TEMP_UPLOAD_DIR: /tmp/meeting-uploads
+      APP_JWT_SECRET: ${JWT_SECRET:-ai-meeting-summarizer-super-secure-jwt-signing-key-2026-very-long-secret}
     depends_on:
       db:
         condition: service_healthy
