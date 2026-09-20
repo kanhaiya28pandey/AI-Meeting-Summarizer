@@ -9,16 +9,23 @@ public class AiTranscriptionResponse {
     private String transcript;
     private String language;
     private List<TranscriptSegment> segments = new ArrayList<>();
+    private Integer duration;
 
     public AiTranscriptionResponse() {
     }
 
     public AiTranscriptionResponse(boolean success, String transcript, String language, List<TranscriptSegment> segments) {
+        this(success, transcript, language, segments, null);
+    }
+
+    public AiTranscriptionResponse(boolean success, String transcript, String language, List<TranscriptSegment> segments, Integer duration) {
         this.success = success;
         this.transcript = transcript;
         this.language = language;
         this.segments = segments != null ? segments : new ArrayList<>();
+        this.duration = duration;
     }
+
 
     public boolean isSuccess() {
         return success;
@@ -51,4 +58,13 @@ public class AiTranscriptionResponse {
     public void setSegments(List<TranscriptSegment> segments) {
         this.segments = segments;
     }
+
+    public Integer getDuration() {
+        return duration;
+    }
+
+    public void setDuration(Integer duration) {
+        this.duration = duration;
+    }
 }
+

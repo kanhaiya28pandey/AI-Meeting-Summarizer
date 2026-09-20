@@ -75,6 +75,15 @@ class MeetingAnalysisService:
         cleaned_transcript = self.validate_transcript(transcript)
         client = self.get_client()
 
+        # Instant handling for silent recordings
+        if cleaned_transcript == "[No audible speech detected in recording]" or "no audible speech" in cleaned_transcript.lower():
+            logger.info("Silent transcript detected. Returning empty intelligence directly.")
+            return MeetingAnalysisResponse(
+                summary="No audible speech was detected in the provided meeting recording.",
+                key_decisions=[],
+                action_items=[],
+            )
+
         logger.info(
             "Starting meeting transcript analysis using model=%s (length=%d characters)",
             self.model,
@@ -89,11 +98,29 @@ class MeetingAnalysisService:
                 temperature=0.2,
             )
 
-            response = client.models.generate_content(
-                model=self.model,
-                contents=build_transcript_analysis_prompt(cleaned_transcript),
-                config=config,
-            )
+            response = None
+            candidate_models = [self.model]
+            for extra in ["gemini-3.5-flash", "gemini-3.6-flash"]:
+                if extra not in candidate_models:
+                    candidate_models.append(extra)
+
+            last_exc = None
+            for model_name in candidate_models:
+                try:
+                    response = client.models.generate_content(
+                        model=model_name,
+                        contents=build_transcript_analysis_prompt(cleaned_transcript),
+                        config=config,
+                    )
+                    if response:
+                        break
+                except Exception as call_err:
+                    last_exc = call_err
+                    logger.warning("Analysis attempt with model %s failed: %s", model_name, call_err)
+
+            if response is None and last_exc:
+                raise last_exc
+
 
             # Two-tier validation: SDK parsed object or Pydantic JSON validation
             result: Optional[MeetingAnalysisResponse] = None

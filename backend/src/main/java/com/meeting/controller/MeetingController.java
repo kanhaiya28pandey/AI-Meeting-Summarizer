@@ -36,42 +36,58 @@ public class MeetingController {
     }
 
     @PostMapping
-    public ResponseEntity<MeetingResponse> createMeeting(@Valid @RequestBody CreateMeetingRequest request) {
-        MeetingResponse response = meetingService.createMeeting(request);
+    public ResponseEntity<MeetingResponse> createMeeting(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.meeting.security.UserPrincipal principal,
+            @Valid @RequestBody CreateMeetingRequest request) {
+        UUID userId = principal != null ? principal.getId() : null;
+        MeetingResponse response = meetingService.createMeeting(userId, request);
         URI location = URI.create("/api/meetings/" + response.getId());
         return ResponseEntity.created(location).body(response);
     }
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<MeetingResponse> uploadMeeting(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.meeting.security.UserPrincipal principal,
             @RequestParam(value = "title", required = false) String title,
             @RequestParam("file") MultipartFile file) throws Exception {
-        MeetingResponse response = meetingUploadService.uploadAndQueueMeeting(title, file);
+        UUID userId = principal != null ? principal.getId() : null;
+        MeetingResponse response = meetingUploadService.uploadAndQueueMeeting(userId, title, file);
         URI location = URI.create("/api/meetings/" + response.getId());
         return ResponseEntity.status(HttpStatus.ACCEPTED).location(location).body(response);
     }
 
     @GetMapping
-    public ResponseEntity<List<MeetingResponse>> getAllMeetings() {
-        List<MeetingResponse> meetings = meetingService.getAllMeetings();
+    public ResponseEntity<List<MeetingResponse>> getAllMeetings(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.meeting.security.UserPrincipal principal) {
+        UUID userId = principal != null ? principal.getId() : null;
+        List<MeetingResponse> meetings = meetingService.getAllMeetings(userId);
         return ResponseEntity.ok(meetings);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<MeetingResponse> getMeetingById(@PathVariable UUID id) {
-        MeetingResponse meeting = meetingService.getMeetingById(id);
+    public ResponseEntity<MeetingResponse> getMeetingById(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.meeting.security.UserPrincipal principal,
+            @PathVariable UUID id) {
+        UUID userId = principal != null ? principal.getId() : null;
+        MeetingResponse meeting = meetingService.getMeetingById(id, userId);
         return ResponseEntity.ok(meeting);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteMeeting(@PathVariable UUID id) {
-        meetingService.deleteMeeting(id);
+    public ResponseEntity<Void> deleteMeeting(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.meeting.security.UserPrincipal principal,
+            @PathVariable UUID id) {
+        UUID userId = principal != null ? principal.getId() : null;
+        meetingService.deleteMeeting(id, userId);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/process")
-    public ResponseEntity<AiProcessResponse> processMeeting(@PathVariable UUID id) {
-        AiProcessResponse response = meetingService.processMeeting(id);
+    public ResponseEntity<AiProcessResponse> processMeeting(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.meeting.security.UserPrincipal principal,
+            @PathVariable UUID id) {
+        UUID userId = principal != null ? principal.getId() : null;
+        AiProcessResponse response = meetingService.processMeeting(id, userId);
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
     }
 }

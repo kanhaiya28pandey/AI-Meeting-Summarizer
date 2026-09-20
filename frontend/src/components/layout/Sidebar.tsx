@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, FileText, Settings, Sparkles, X } from 'lucide-react';
+import { Home, FileText, Settings, Sparkles, X, LogOut } from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
 
 export interface SidebarProps {
   isOpen: boolean;
@@ -14,6 +15,8 @@ interface NavItem {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
+  const { user, isAuthenticated, logout } = useAuth();
+
   const navItems: NavItem[] = [
     { to: '/', label: 'Home', icon: <Home size={18} /> },
     { to: '/meetings', label: 'My Meetings', icon: <FileText size={18} /> },
@@ -31,6 +34,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
+
+  const getInitials = (name?: string) => {
+    if (!name) return 'U';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  };
 
   return (
     <>
@@ -182,14 +192,99 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               <span>{item.label}</span>
             </NavLink>
           ))}
+
         </nav>
+
+        {/* User Account Section (when logged in) */}
+        {isAuthenticated && user && (
+          <div
+            style={{
+              padding: '0.85rem 1rem',
+              borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+              backgroundColor: 'rgba(0, 0, 0, 0.15)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+              <NavLink
+                to="/settings"
+                onClick={onClose}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', minWidth: 0, textDecoration: 'none' }}
+                className="hover:opacity-85"
+                title="Profile & Settings"
+              >
+                <div
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    fontSize: '0.75rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  {getInitials(user.fullName)}
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      color: '#ffffff',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {user.fullName}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '0.7rem',
+                      color: '#818cf8',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    @{user.username}
+                  </div>
+                </div>
+              </NavLink>
+
+              <button
+                onClick={logout}
+                title="Log Out"
+                aria-label="Log out"
+                style={{
+                  color: '#94a3b8',
+                  padding: '0.35rem',
+                  borderRadius: 'var(--radius-sm)',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                className="hover:text-red-400 hover:bg-slate-700/50"
+              >
+                <LogOut size={16} />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Footer info */}
         <div
           style={{
-            padding: '1rem 1.25rem',
-            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-            fontSize: '0.75rem',
+            padding: '0.65rem 1.25rem',
+            borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+            fontSize: '0.7rem',
             color: '#64748b',
             display: 'flex',
             alignItems: 'center',
@@ -199,7 +294,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           <span>v1.0.0 (MVP)</span>
           <span
             style={{
-              padding: '0.15rem 0.4rem',
+              padding: '0.1rem 0.35rem',
               borderRadius: 'var(--radius-full)',
               backgroundColor: 'rgba(16, 185, 129, 0.15)',
               color: '#34d399',
@@ -233,3 +328,4 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     </>
   );
 };
+export default Sidebar;

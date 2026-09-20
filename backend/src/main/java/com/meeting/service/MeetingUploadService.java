@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.UUID;
 
 @Service
 public class MeetingUploadService {
@@ -21,17 +22,32 @@ public class MeetingUploadService {
     private final MeetingRepository meetingRepository;
     private final TemporaryFileService temporaryFileService;
     private final MeetingProcessingAsyncService meetingProcessingAsyncService;
+    private final com.meeting.repository.UserRepository userRepository;
 
     public MeetingUploadService(
             MeetingRepository meetingRepository,
             TemporaryFileService temporaryFileService,
             MeetingProcessingAsyncService meetingProcessingAsyncService) {
+        this(meetingRepository, temporaryFileService, meetingProcessingAsyncService, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public MeetingUploadService(
+            MeetingRepository meetingRepository,
+            TemporaryFileService temporaryFileService,
+            MeetingProcessingAsyncService meetingProcessingAsyncService,
+            com.meeting.repository.UserRepository userRepository) {
         this.meetingRepository = meetingRepository;
         this.temporaryFileService = temporaryFileService;
         this.meetingProcessingAsyncService = meetingProcessingAsyncService;
+        this.userRepository = userRepository;
     }
 
     public MeetingResponse uploadAndQueueMeeting(String title, MultipartFile file) throws IOException {
+        return uploadAndQueueMeeting(null, title, file);
+    }
+
+    public MeetingResponse uploadAndQueueMeeting(UUID userId, String title, MultipartFile file) throws IOException {
         temporaryFileService.validateAudioFile(file);
 
         String originalFilename = file.getOriginalFilename();
@@ -76,6 +92,11 @@ public class MeetingUploadService {
         meeting.setStatus(MeetingStatus.UPLOADED);
         meeting.setKeyDecisions(new ArrayList<>());
         meeting.setActionItems(new ArrayList<>());
+
+        if (userId != null && userRepository != null) {
+            userRepository.findById(userId).ifPresent(meeting::setUser);
+        }
+
         meeting = meetingRepository.save(meeting);
 
         log.info("Created meeting id={} with status UPLOADED. Submitting for background processing.", meeting.getId());

@@ -1,12 +1,13 @@
 import logging
 import os
 import uuid
+import wave
 from pathlib import Path
 from typing import Optional, Set, Tuple
 
 from app.core.config import settings
 from app.services.ffmpeg_service import FFmpegService, ffmpeg_service
-from app.utils.exceptions import InvalidAudioFileException
+from app.utils.exceptions import InvalidAudioFileException, NoAudioTrackException
 
 logger = logging.getLogger(__name__)
 
@@ -125,12 +126,30 @@ class MediaService:
             extracted_filename,
         )
 
-        extracted_audio_path = self.ffmpeg_service.extract_audio(
-            video_path=input_media_path,
-            output_audio_path=str(extracted_path),
-        )
+        try:
+            extracted_audio_path = self.ffmpeg_service.extract_audio(
+                video_path=input_media_path,
+                output_audio_path=str(extracted_path),
+            )
+        except NoAudioTrackException:
+            logger.info(
+                "Video '%s' contains no audio stream. Generating silent audio fallback for graceful analysis.",
+                original_filename,
+            )
+            self._generate_silent_audio(str(extracted_path))
+            extracted_audio_path = str(extracted_path)
 
         return extracted_audio_path, extracted_audio_path, extracted_filename
+
+    def _generate_silent_audio(self, output_path: str, duration_seconds: int = 1) -> None:
+        """Generates a standard 16-bit 16kHz mono PCM silent WAV file."""
+        sample_rate = 16000
+        num_samples = sample_rate * duration_seconds
+        with wave.open(output_path, "wb") as wav_file:
+            wav_file.setnchannels(1)
+            wav_file.setsampwidth(2)
+            wav_file.setframerate(sample_rate)
+            wav_file.writeframes(b"\x00" * (num_samples * 2))
 
 
 media_service = MediaService()

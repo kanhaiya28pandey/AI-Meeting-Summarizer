@@ -1,5 +1,5 @@
-import { useState, type FC, type FormEvent, type ChangeEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, type FC, type FormEvent, type ChangeEvent } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FileAudio, FileVideo, Trash2, CheckCircle2, AlertCircle, UploadCloud } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
@@ -9,6 +9,7 @@ import { api } from '../../services/api';
 import { validateAudioFile, validateMeetingTitle } from '../../utils/fileValidation';
 import { formatFileSize } from '../../utils/formatFileSize';
 import { getFriendlyErrorMessage } from '../../utils/apiError';
+import { useAuth } from '../../hooks/useAuth';
 
 export type UploadState = 'idle' | 'uploading' | 'success' | 'error';
 
@@ -18,9 +19,11 @@ export interface UploadCardProps {
 
 export const UploadCard: FC<UploadCardProps> = ({ className = '' }) => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { isAuthenticated, pendingUpload, setPendingUpload } = useAuth();
 
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [title, setTitle] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(() => pendingUpload?.file || null);
+  const [title, setTitle] = useState(() => pendingUpload?.title || '');
   const [uploadState, setUploadState] = useState<UploadState>('idle');
   const [uploadProgress, setUploadProgress] = useState(0);
 
@@ -67,25 +70,7 @@ export const UploadCard: FC<UploadCardProps> = ({ className = '' }) => {
     }
   };
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (isUploading) return;
-
-    // 1. Validate file
-    const fileResult = validateAudioFile(selectedFile);
-    if (!fileResult.valid) {
-      setFileError(fileResult.error || 'Please select a valid audio file.');
-      return;
-    }
-
-    // 2. Validate title
-    const titleResult = validateMeetingTitle(title);
-    if (!titleResult.valid) {
-      setTitleError(titleResult.error || 'Please enter a meeting title.');
-      return;
-    }
-
-    // 3. Clear errors and start upload
+  const performUpload = async (fileToUpload: File, meetingTitle: string) => {
     setFileError(null);
     setTitleError(null);
     setServerError(null);
@@ -94,8 +79,8 @@ export const UploadCard: FC<UploadCardProps> = ({ className = '' }) => {
 
     try {
       const createdMeeting = await api.uploadMeeting(
-        selectedFile!,
-        title.trim(),
+        fileToUpload,
+        meetingTitle,
         (progress) => {
           setUploadProgress(progress);
         }
@@ -106,7 +91,6 @@ export const UploadCard: FC<UploadCardProps> = ({ className = '' }) => {
       }
 
       setUploadState('success');
-      // Navigate to Meeting Details using the real UUID
       navigate(`/meetings/${createdMeeting.id}`);
     } catch (err: unknown) {
       console.error('Upload failed:', err);
@@ -114,6 +98,55 @@ export const UploadCard: FC<UploadCardProps> = ({ className = '' }) => {
       setServerError(friendlyMessage);
       setUploadState('error');
     }
+  };
+
+  // Auto-resume analysis if user just signed in or signed up
+  useEffect(() => {
+    if (pendingUpload) {
+      if (!selectedFile && pendingUpload.file) {
+        setSelectedFile(pendingUpload.file);
+      }
+      if (!title && pendingUpload.title) {
+        setTitle(pendingUpload.title);
+      }
+      if (searchParams.get('autoAnalyze') === 'true' && isAuthenticated && !isUploading) {
+        searchParams.delete('autoAnalyze');
+        setSearchParams(searchParams, { replace: true });
+        const fileToUpload = pendingUpload.file;
+        const meetingTitle = pendingUpload.title;
+        setPendingUpload(null);
+        performUpload(fileToUpload, meetingTitle);
+      }
+    }
+  }, [pendingUpload, isAuthenticated, searchParams]);
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (isUploading) return;
+
+    // 1. Validate file
+    const fileResult = validateAudioFile(selectedFile);
+    if (!fileResult.valid) {
+      setFileError(fileResult.error || 'Please select a valid audio or video file.');
+      return;
+    }
+
+    // 2. Validate title
+    const titleResult = validateMeetingTitle(title);
+    if (!titleResult.valid) {
+      setTitleError(titleResult.error || 'Please enter a meeting title.');
+      return;
+    }
+
+    // 3. If user is not authenticated, save pending meeting and navigate to Sign In / Sign Up
+    if (!isAuthenticated) {
+      setPendingUpload({ file: selectedFile!, title: title.trim() });
+      navigate('/login?redirect=analyze');
+      return;
+    }
+
+    // 4. Start upload
+    performUpload(selectedFile!, title.trim());
   };
 
   return (
@@ -395,9 +428,9 @@ export const UploadCard: FC<UploadCardProps> = ({ className = '' }) => {
             disabled={isUploading || !selectedFile}
             loading={isUploading}
             icon={<UploadCloud size={18} />}
-            style={{ minWidth: '160px' }}
+            style={{ minWidth: '170px' }}
           >
-            {isUploading ? 'Uploading...' : 'Upload Meeting'}
+            {isUploading ? 'Uploading...' : 'Analyze Meeting'}
           </Button>
         </div>
       </form>

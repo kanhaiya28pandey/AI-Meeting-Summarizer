@@ -10,4 +10,13 @@ import java.util.UUID;
 @Repository
 public interface MeetingRepository extends JpaRepository<Meeting, UUID> {
     List<Meeting> findAllByOrderByCreatedAtDesc();
+
+    List<Meeting> findAllByUser_IdOrderByCreatedAtDesc(UUID userId);
+
+    java.util.Optional<Meeting> findByIdAndUser_Id(UUID id, UUID userId);
+
+    boolean existsByIdAndUser_Id(UUID id, UUID userId);
+
+    void deleteByIdAndUser_Id(UUID id, UUID userId);
 }
+

@@ -100,8 +100,12 @@ public class MeetingProcessingService {
             }
             String transcript = transcription.getTranscript();
             meeting.setTranscript(transcript);
+            if (transcription.getDuration() != null && transcription.getDuration() > 0) {
+                meeting.setDuration(transcription.getDuration());
+            }
             meeting = meetingRepository.save(meeting);
-            log.info("Meeting transcription completed: {}", meetingId);
+            log.info("Meeting transcription completed: {} (duration={}s)", meetingId, meeting.getDuration());
+
 
             // 3. Transition to ANALYZING
             if (!meetingRepository.existsById(meetingId)) {

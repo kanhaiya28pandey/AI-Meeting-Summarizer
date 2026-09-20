@@ -42,15 +42,29 @@ class SecurityHardeningTest {
     @Autowired
     private MeetingRepository meetingRepository;
 
+    @Autowired
+    private com.meeting.repository.UserRepository userRepository;
+
+    @Autowired
+    private com.meeting.security.JwtService jwtService;
+
     @MockitoBean
     private AiServiceClient aiServiceClient;
 
     @Value("${app.upload.temp-dir:./temp/uploads}")
     private String tempUploadDir;
 
+    private String authHeader;
+
     @BeforeEach
     void clean() {
         meetingRepository.deleteAll();
+        com.meeting.model.User user = userRepository.findByUsernameIgnoreCase("sec_test_user")
+                .orElseGet(() -> userRepository.save(new com.meeting.model.User(
+                        "sec_test_user", "sec_test@example.com", "pass123", "Security User", "+91", "9998887776"
+                )));
+        authHeader = "Bearer " + jwtService.generateToken(user);
+
         File tempFolder = Paths.get(tempUploadDir).toFile();
         if (tempFolder.exists() && tempFolder.isDirectory()) {
             File[] files = tempFolder.listFiles();
@@ -74,7 +88,8 @@ class SecurityHardeningTest {
 
     @Test
     void testSecurityHeaders_cacheControlOnMeetingEndpoints() throws Exception {
-        mockMvc.perform(get("/api/meetings"))
+        mockMvc.perform(get("/api/meetings")
+                        .header("Authorization", authHeader))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0"))
                 .andExpect(header().string("Pragma", "no-cache"));
@@ -106,7 +121,8 @@ class SecurityHardeningTest {
 
     @Test
     void testInvalidUuidFormat_shouldReturnClean400BadRequest() throws Exception {
-        mockMvc.perform(get("/api/meetings/not-a-valid-uuid"))
+        mockMvc.perform(get("/api/meetings/not-a-valid-uuid")
+                        .header("Authorization", authHeader))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status", is(400)))
                 .andExpect(jsonPath("$.error", is("Bad Request")))
@@ -124,6 +140,7 @@ class SecurityHardeningTest {
 
         mockMvc.perform(multipart("/api/meetings/upload")
                         .file(traversalFile)
+                        .header("Authorization", authHeader)
                         .param("title", "Path Traversal Test"))
                 .andExpect(status().isAccepted())
                 .andExpect(jsonPath("$.id", notNullValue()));
@@ -150,6 +167,7 @@ class SecurityHardeningTest {
 
         mockMvc.perform(multipart("/api/meetings/upload")
                         .file(injectionFile)
+                        .header("Authorization", authHeader)
                         .param("title", "Command Injection Test"))
                 .andExpect(status().isAccepted())
                 .andExpect(jsonPath("$.id", notNullValue()));
@@ -178,6 +196,7 @@ class SecurityHardeningTest {
         String excessiveTitle = "a".repeat(201);
         mockMvc.perform(multipart("/api/meetings/upload")
                         .file(file)
+                        .header("Authorization", authHeader)
                         .param("title", excessiveTitle))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status", is(400)))

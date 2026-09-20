@@ -6,8 +6,10 @@ from google import genai
 from google.genai import types, errors
 from pydantic import ValidationError
 
+import re
 from app.core.config import settings
 from app.schemas.transcription import TranscriptSegment, TranscriptionResponse
+from app.services.ffmpeg_service import ffmpeg_service
 from app.services.gemini_service import gemini_service
 from app.utils.exceptions import (
     AudioFileTooLargeException,
@@ -17,6 +19,47 @@ from app.utils.exceptions import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def normalize_speaker(label: Optional[str]) -> Optional[str]:
+    """Normalizes speaker labels e.g. 'spk_0', 'spk:0', 'speaker_1' -> 'Speaker 1'."""
+    if not label:
+        return None
+    s = str(label).strip()
+    if not s:
+        return None
+    m = re.match(r"^(?:spk|speaker)[\s_:-]*(\d+)$", s, re.IGNORECASE)
+    if m:
+        return f"Speaker {int(m.group(1)) + 1}"
+    if s.isdigit():
+        return f"Speaker {int(s) + 1}"
+    return s
+
+
+
+def build_speaker_transcript(segments: list[TranscriptSegment]) -> str:
+    """Combines segments into a person-by-person transcript with blank lines between turns."""
+    if not segments:
+        return ""
+    turns: list[str] = []
+    current_spk = None
+    current_texts: list[str] = []
+
+    for seg in segments:
+        spk = normalize_speaker(seg.speaker) or "Speaker 1"
+        if spk != current_spk:
+            if current_texts:
+                turns.append(f"{current_spk}: {' '.join(current_texts).strip()}")
+                current_texts = []
+            current_spk = spk
+        current_texts.append(seg.text.strip())
+
+    if current_texts:
+        turns.append(f"{current_spk}: {' '.join(current_texts).strip()}")
+
+    return "\n\n".join(turns)
+
+
 
 SUPPORTED_AUDIO_EXTENSIONS = {
     ".mp3": "audio/mp3",
@@ -110,12 +153,16 @@ class TranscriptionService:
         mime_type = self.validate_audio_file(file_path, original_filename, declared_mime)
         client = self.get_client()
 
+        # Extract media duration via FFmpeg
+        duration = ffmpeg_service.get_media_duration(file_path)
+
         uploaded_file = None
         logger.info(
-            "Starting audio transcription for file=%s (size=%d bytes, mime=%s) using model=%s",
+            "Starting audio transcription for file=%s (size=%d bytes, mime=%s, duration=%s) using model=%s",
             original_filename,
             Path(file_path).stat().st_size,
             mime_type,
+            duration,
             self.model,
         )
 
@@ -158,40 +205,59 @@ class TranscriptionService:
                 )
             except Exception as primary_err:
                 logger.warning(
-                    "Primary audio transcription with model=%s failed (%s: %s). Attempting fallback with %s.",
+                    "Primary audio transcription with model=%s failed (%s: %s). Attempting fallback.",
                     self.model,
                     type(primary_err).__name__,
                     str(primary_err),
-                    settings.GEMINI_MODEL,
                 )
-                try:
-                    response = client.models.generate_content(
-                        model=settings.GEMINI_MODEL,
-                        contents=[
-                            uploaded_file,
-                            "Please provide a complete, verbatim transcript of the audio in this recording. Output only the transcription without commentary.",
-                        ],
-                    )
-                except errors.APIError as e:
-                    logger.error("Gemini transcription API error: %s", getattr(e, "message", str(e)))
-                    raise TranscriptionException(
-                        detail="Transcription service is temporarily unavailable",
-                        status_code=503
-                    ) from e
-                except Exception as e:
-                    logger.error("Unexpected error during Gemini audio transcription: %s", type(e).__name__)
+                fallback_models = [settings.GEMINI_MODEL, "gemini-3.5-flash", "gemini-3.6-flash"]
+                last_err = primary_err
+                for fb_model in fallback_models:
+                    try:
+                        logger.info("Attempting fallback transcription with model=%s", fb_model)
+                        response = client.models.generate_content(
+                            model=fb_model,
+                            contents=[
+                                uploaded_file,
+                                (
+                                    "Please provide an accurate, verbatim transcript of the audio recording. "
+                                    "Divide the conversation person-by-person (turn-by-turn) with clear speaker labels "
+                                    "(e.g., 'Speaker 1:', 'Speaker 2:' or names if mentioned in the recording). "
+                                    "Put a blank line between each speaker's turn. "
+                                    "If only one person is speaking throughout the entire recording, use 'Speaker 1:' for their speech. "
+                                    "Output only the transcription without commentary."
+                                ),
+                            ],
+                        )
+                        if response:
+                            break
+                    except Exception as fb_err:
+                        last_err = fb_err
+                        logger.warning("Fallback model %s failed: %s", fb_model, fb_err)
+
+                if response is None:
+                    if isinstance(last_err, errors.APIError):
+                        logger.error("Gemini transcription API error: %s", getattr(last_err, "message", str(last_err)))
+                        raise TranscriptionException(
+                            detail="Transcription service is temporarily unavailable",
+                            status_code=503
+                        ) from last_err
                     raise TranscriptionException(
                         detail="An unexpected error occurred during transcription",
                         status_code=503
-                    ) from e
+                    ) from last_err
 
             # 3. Parse transcript and segments
             transcript_text = getattr(response, "text", "") or ""
             segments = self._parse_segments(response)
 
-            if not transcript_text and segments:
-                transcript_text = " ".join(s.text for s in segments if s.text).strip()
+            # If segments were extracted with speaker info, construct person-by-person transcript
+            if segments:
+                formatted_from_segments = build_speaker_transcript(segments)
+                if formatted_from_segments:
+                    transcript_text = formatted_from_segments
 
+            # If transcript_text is still empty, look in candidates/parts
             if not transcript_text:
                 for candidate in getattr(response, "candidates", []) or []:
                     for part in getattr(getattr(candidate, "content", None), "parts", []) or []:
@@ -206,6 +272,32 @@ class TranscriptionService:
             # If no speech was detected at all (silence or non-vocal audio)
             if not transcript_text or not transcript_text.strip():
                 transcript_text = "[No audible speech detected in recording]"
+            elif transcript_text != "[No audible speech detected in recording]":
+                # Ensure transcript has person-by-person speaker labeling
+                has_speaker_prefix = bool(re.search(r"^([^:\n]{1,35}):", transcript_text, re.MULTILINE))
+                if not has_speaker_prefix:
+                    # Single speaker or flat paragraph: label as Speaker 1
+                    transcript_text = f"Speaker 1: {transcript_text}"
+
+                # If segments was empty, generate segments from dialogue turns in transcript_text
+                if not segments:
+                    blocks = [b.strip() for b in transcript_text.split("\n\n") if b.strip()]
+                    for block in blocks:
+                        match = re.match(r"^([^:\n]{1,35}):\s*([\s\S]+)$", block)
+                        if match:
+                            segments.append(TranscriptSegment(
+                                speaker=match.group(1).strip(),
+                                text=match.group(2).strip(),
+                                start_time=None,
+                                end_time=None
+                            ))
+                        else:
+                            segments.append(TranscriptSegment(
+                                speaker="Speaker 1",
+                                text=block,
+                                start_time=None,
+                                end_time=None
+                            ))
 
             detected_language = getattr(response, "language", None)
 
@@ -215,8 +307,14 @@ class TranscriptionService:
                     transcript=transcript_text,
                     language=detected_language,
                     segments=segments,
+                    duration=duration,
                 )
-                logger.info("Transcription completed successfully. Total characters=%d, segments=%d", len(transcript_text), len(segments))
+                logger.info(
+                    "Transcription completed successfully. Total characters=%d, segments=%d, duration=%s",
+                    len(transcript_text),
+                    len(segments),
+                    duration,
+                )
                 return result
             except ValidationError as e:
                 logger.error("Failed to validate transcription output schema: %s", e)

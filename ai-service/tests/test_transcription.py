@@ -230,3 +230,27 @@ def test_transcription_missing_speaker_and_timestamps():
 def test_live_transcription_opt_in():
     service = TranscriptionService()
     assert service.model == "gemini-3.5-transcribe"
+
+
+def test_normalize_speaker_labels():
+    from app.services.transcription_service import normalize_speaker
+    assert normalize_speaker("spk_0") == "Speaker 1"
+    assert normalize_speaker("spk_1") == "Speaker 2"
+    assert normalize_speaker("speaker_2") == "Speaker 3"
+    assert normalize_speaker("0") == "Speaker 1"
+    assert normalize_speaker("Alice") == "Alice"
+    assert normalize_speaker("") is None
+    assert normalize_speaker(None) is None
+
+
+def test_build_speaker_transcript():
+    from app.services.transcription_service import build_speaker_transcript
+    segs = [
+        TranscriptSegment(speaker="spk_0", text="Hello team."),
+        TranscriptSegment(speaker="spk_0", text="Welcome to the sprint demo."),
+        TranscriptSegment(speaker="spk_1", text="Thanks for organizing."),
+    ]
+    result = build_speaker_transcript(segs)
+    expected = "Speaker 1: Hello team. Welcome to the sprint demo.\n\nSpeaker 2: Thanks for organizing."
+    assert result == expected
+

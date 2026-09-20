@@ -1,6 +1,6 @@
-import { useEffect, useState, type FC } from 'react';
+import { useEffect, useState, useMemo, type FC } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, RefreshCw, AlertCircle } from 'lucide-react';
+import { Plus, RefreshCw, AlertCircle, Lock, LogIn, UserPlus } from 'lucide-react';
 import type { Meeting } from '../types/meeting';
 import { api } from '../services/api';
 import { getFriendlyErrorMessage } from '../utils/apiError';
@@ -8,10 +8,13 @@ import { PageHeader } from '../components/ui/PageHeader';
 import { Button, Card, Skeleton, ErrorState, useToast } from '../components/ui';
 import { MeetingList } from '../components/meeting/MeetingList';
 import { ConfirmDialog } from '../components/common/ConfirmDialog';
+import { MeetingFilters, type DateFilterPreset } from '../components/meeting/MeetingFilters';
+import { useAuth } from '../hooks/useAuth';
 
 export const Meetings: FC = () => {
   const navigate = useNavigate();
   const { success: toastSuccess } = useToast();
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     document.title = 'My Meetings | AI Meeting Summarizer';
@@ -20,6 +23,11 @@ export const Meetings: FC = () => {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Filters state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [dateFilter, setDateFilter] = useState<DateFilterPreset>('all');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   // Delete flow state
   const [deleteTarget, setDeleteTarget] = useState<Meeting | null>(null);
@@ -41,6 +49,12 @@ export const Meetings: FC = () => {
 
   useEffect(() => {
     let active = true;
+    if (!isAuthenticated) {
+      setLoading(false);
+      setMeetings([]);
+      return;
+    }
+
     api.getMeetings()
       .then((data) => {
         if (active) {
@@ -59,7 +73,7 @@ export const Meetings: FC = () => {
     return () => {
       active = false;
     };
-  }, []);
+  }, [isAuthenticated]);
 
   const handleOpenDelete = (meeting: Meeting) => {
     setDeleteError(null);
@@ -80,7 +94,6 @@ export const Meetings: FC = () => {
     setDeleteError(null);
     try {
       await api.deleteMeeting(targetId);
-      // Immediate removal from list upon 204 No Content
       setMeetings((prev) => prev.filter((m) => m.id !== targetId));
       setDeleteTarget(null);
       toastSuccess?.('Meeting deleted successfully');
@@ -99,33 +112,84 @@ export const Meetings: FC = () => {
     navigate(`/meetings/${id}`);
   };
 
-  // Formatted meeting count string
-  const meetingCountText =
-    meetings.length === 1 ? '1 meeting' : `${meetings.length} meetings`;
+  const handleClearFilters = () => {
+    setSearchQuery('');
+    setDateFilter('all');
+    setStatusFilter('all');
+  };
+
+  // Filtered meetings logic
+  const filteredMeetings = useMemo(() => {
+    return meetings.filter((meeting) => {
+      // 1. Search Query (title, summary, transcript)
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const inTitle = meeting.title?.toLowerCase().includes(q);
+        const inSummary = meeting.summary?.toLowerCase().includes(q);
+        const inTranscript = meeting.transcript?.toLowerCase().includes(q);
+        if (!inTitle && !inSummary && !inTranscript) {
+          return false;
+        }
+      }
+
+      // 2. Date Filter
+      if (dateFilter !== 'all' && meeting.createdAt) {
+        const meetingDate = new Date(meeting.createdAt);
+        const now = new Date();
+        if (dateFilter === 'today') {
+          const isToday =
+            meetingDate.getDate() === now.getDate() &&
+            meetingDate.getMonth() === now.getMonth() &&
+            meetingDate.getFullYear() === now.getFullYear();
+          if (!isToday) return false;
+        } else if (dateFilter === 'week') {
+          const sevenDaysAgo = new Date();
+          sevenDaysAgo.setDate(now.getDate() - 7);
+          if (meetingDate < sevenDaysAgo) return false;
+        } else if (dateFilter === 'month') {
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(now.getDate() - 30);
+          if (meetingDate < thirtyDaysAgo) return false;
+        } else if (dateFilter === 'this_month') {
+          const isThisMonth =
+            meetingDate.getMonth() === now.getMonth() &&
+            meetingDate.getFullYear() === now.getFullYear();
+          if (!isThisMonth) return false;
+        }
+      }
+
+      // 3. Status Filter
+      if (statusFilter !== 'all') {
+        if (statusFilter === 'COMPLETED' && meeting.status !== 'COMPLETED') return false;
+        if (statusFilter === 'FAILED' && meeting.status !== 'FAILED') return false;
+        if (statusFilter === 'PROCESSING' && (meeting.status === 'COMPLETED' || meeting.status === 'FAILED')) return false;
+      }
+
+      return true;
+    });
+  }, [meetings, searchQuery, dateFilter, statusFilter]);
 
   return (
     <div>
       {/* Page Header */}
       <PageHeader
         title="My Meetings"
-        description={
-          !loading && meetings.length > 0
-            ? `Your meetings (${meetingCountText})`
-            : 'Your processed meetings, summaries, and action items.'
-        }
+        description="Your processed meetings, summaries, transcripts, and action items."
         action={
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <Button
-              variant="ghost"
-              size="sm"
-              icon={<RefreshCw size={15} className={loading ? 'animate-spin' : ''} />}
-              onClick={handleRefresh}
-              disabled={loading}
-              title="Refresh meeting list"
-              aria-label="Refresh meeting list"
-            >
-              Refresh
-            </Button>
+            {isAuthenticated && (
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={<RefreshCw size={15} className={loading ? 'animate-spin' : ''} />}
+                onClick={handleRefresh}
+                disabled={loading}
+                title="Refresh meeting list"
+                aria-label="Refresh meeting list"
+              >
+                Refresh
+              </Button>
+            )}
             <Button
               variant="primary"
               size="sm"
@@ -137,6 +201,69 @@ export const Meetings: FC = () => {
           </div>
         }
       />
+
+      {/* Unauthenticated Notification Banner */}
+      {!isAuthenticated && (
+        <Card
+          padding="lg"
+          style={{
+            marginBottom: '2rem',
+            textAlign: 'center',
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-xl)',
+            padding: '2.5rem 1.5rem',
+          }}
+        >
+          <div
+            style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '50%',
+              backgroundColor: 'rgba(99, 102, 241, 0.1)',
+              color: 'var(--primary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 1rem',
+            }}
+          >
+            <Lock size={24} />
+          </div>
+          <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+            Sign in to view your meetings
+          </h3>
+          <p
+            style={{
+              fontSize: '0.875rem',
+              color: 'var(--text-secondary)',
+              maxWidth: '460px',
+              margin: '0 auto 1.5rem',
+              lineHeight: 1.5,
+            }}
+          >
+            All uploaded and analyzed meetings are securely saved to individual accounts. Sign in or create an account to access, search, and manage your private meeting archive.
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <Button
+              variant="outline"
+              size="md"
+              icon={<LogIn size={16} />}
+              onClick={() => navigate('/login', { state: { from: { pathname: '/meetings' } } })}
+            >
+              Sign In
+            </Button>
+            <Button
+              variant="primary"
+              size="md"
+              icon={<UserPlus size={16} />}
+              onClick={() => navigate('/signup', { state: { from: { pathname: '/meetings' } } })}
+            >
+              Create Free Account
+            </Button>
+          </div>
+        </Card>
+      )}
 
       {/* Delete Error Inline Alert */}
       {deleteError && (
@@ -174,8 +301,23 @@ export const Meetings: FC = () => {
         </div>
       )}
 
+      {/* Meeting Filters & Search (Only shown if user has meetings or active search) */}
+      {isAuthenticated && !loading && (meetings.length > 0 || searchQuery || dateFilter !== 'all' || statusFilter !== 'all') && (
+        <MeetingFilters
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          dateFilter={dateFilter}
+          onDateFilterChange={setDateFilter}
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
+          onClearFilters={handleClearFilters}
+          totalMeetingsCount={meetings.length}
+          filteredMeetingsCount={filteredMeetings.length}
+        />
+      )}
+
       {/* Loading Skeletons */}
-      {loading && (
+      {isAuthenticated && loading && (
         <div
           style={{
             display: 'grid',
@@ -212,7 +354,7 @@ export const Meetings: FC = () => {
       )}
 
       {/* Error State */}
-      {!loading && error && (
+      {isAuthenticated && !loading && error && (
         <ErrorState
           title="Couldn't load your meetings"
           message={error}
@@ -221,9 +363,9 @@ export const Meetings: FC = () => {
       )}
 
       {/* Meeting Collection */}
-      {!loading && !error && (
+      {isAuthenticated && !loading && !error && (
         <MeetingList
-          meetings={meetings}
+          meetings={filteredMeetings}
           onView={handleViewMeeting}
           onDelete={handleOpenDelete}
           deletingMeetingId={deleting ? deleteTarget?.id : null}
@@ -249,3 +391,4 @@ export const Meetings: FC = () => {
     </div>
   );
 };
+export default Meetings;

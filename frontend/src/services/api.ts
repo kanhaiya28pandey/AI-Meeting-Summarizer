@@ -1,10 +1,58 @@
 import type { Meeting } from "../types/meeting";
 import type { ApiError } from "../types/api";
+import type { AuthResponse, ChangePasswordData, LoginData, SignupData, UpdateProfileData, User } from "../types/auth";
 import { ApiClientError } from "../types/api";
 
 export { ApiClientError };
 
-const BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api").replace(/\/+$/, "");
+const BASE_URL = (
+  typeof window !== "undefined"
+    ? (import.meta.env.VITE_API_BASE_URL || "/api")
+    : (import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api")
+).replace(/\/+$/, "");
+
+const TOKEN_KEY = "ai_meeting_token";
+const USER_KEY = "ai_meeting_user";
+
+export const authStorage = {
+  getToken: (): string | null => {
+    try {
+      return localStorage.getItem(TOKEN_KEY);
+    } catch {
+      return null;
+    }
+  },
+  setToken: (token: string): void => {
+    try {
+      localStorage.setItem(TOKEN_KEY, token);
+    } catch {
+      // ignore
+    }
+  },
+  getUser: (): User | null => {
+    try {
+      const data = localStorage.getItem(USER_KEY);
+      return data ? JSON.parse(data) : null;
+    } catch {
+      return null;
+    }
+  },
+  setUser: (user: User): void => {
+    try {
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+    } catch {
+      // ignore
+    }
+  },
+  clear: (): void => {
+    try {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+    } catch {
+      // ignore
+    }
+  },
+};
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${BASE_URL}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
@@ -12,6 +60,11 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   const headers = new Headers(options.headers || {});
   if (!headers.has("Accept")) {
     headers.set("Accept", "application/json");
+  }
+
+  const token = authStorage.getToken();
+  if (token && !headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${token}`);
   }
 
   let response: Response;
@@ -35,6 +88,14 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
       // Body may not be JSON
     }
 
+    if (response.status === 401) {
+      // Auth expired or invalid
+      // Don't auto-clear if it was a login attempt failure
+      if (!endpoint.includes("/auth/login")) {
+        authStorage.clear();
+      }
+    }
+
     const errorMessage = errorData?.message || errorData?.error || `Request failed with status ${response.status}`;
     throw new ApiClientError(errorMessage, response.status, errorData);
   }
@@ -47,6 +108,67 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 }
 
 export const api = {
+  // Authentication endpoints
+  auth: {
+    signup: async (data: SignupData): Promise<AuthResponse> => {
+      const res = await request<AuthResponse>("/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (res?.token) {
+        authStorage.setToken(res.token);
+        if (res.user) authStorage.setUser(res.user);
+      }
+      return res;
+    },
+
+    login: async (data: LoginData): Promise<AuthResponse> => {
+      const res = await request<AuthResponse>("/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (res?.token) {
+        authStorage.setToken(res.token);
+        if (res.user) authStorage.setUser(res.user);
+      }
+      return res;
+    },
+
+    getCurrentUser: async (): Promise<User> => {
+      const user = await request<User>("/users/me");
+      authStorage.setUser(user);
+      return user;
+    },
+
+    logout: (): void => {
+      authStorage.clear();
+    },
+  },
+
+  // User Profile endpoints
+  user: {
+    updateProfile: async (data: UpdateProfileData): Promise<User> => {
+      const updated = await request<User>("/users/me", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      authStorage.setUser(updated);
+      return updated;
+    },
+
+    changePassword: (data: ChangePasswordData): Promise<{ message: string }> => {
+      return request<{ message: string }>("/users/me/password", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+    },
+  },
+
+  // Meeting endpoints
   getMeetings: (): Promise<Meeting[]> => {
     return request<Meeting[]>("/meetings");
   },
@@ -77,6 +199,12 @@ export const api = {
       const xhr = new XMLHttpRequest();
       xhr.open("POST", url, true);
       xhr.setRequestHeader("Accept", "application/json");
+
+      const token = authStorage.getToken();
+      if (token) {
+        xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+      }
+
       // 5-minute timeout matching backend processing capacity
       xhr.timeout = 300000;
 
@@ -110,6 +238,9 @@ export const api = {
           }
           resolve(responseData as Meeting);
         } else {
+          if (xhr.status === 401) {
+            authStorage.clear();
+          }
           const errorMsg =
             responseData?.message ||
             responseData?.error ||

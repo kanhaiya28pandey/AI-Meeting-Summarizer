@@ -42,6 +42,34 @@ class FFmpegService:
             return True
         return False
 
+    def get_media_duration(self, media_path: str) -> Optional[int]:
+        """Inspects media file header via FFmpeg to determine duration in seconds."""
+        if not self.is_available():
+            return None
+        media_file = Path(media_path)
+        if not media_file.exists() or not media_file.is_file():
+            return None
+
+        cmd = [self.ffmpeg_bin, "-i", str(media_file)]
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=10,
+                shell=False,
+                check=False,
+                errors="replace",
+            )
+            import re
+            match = re.search(r"Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)", result.stderr)
+            if match:
+                h, m, s = match.groups()
+                return int(round(int(h) * 3600 + int(m) * 60 + float(s)))
+        except Exception as e:
+            logger.warning("Could not extract media duration from '%s': %s", media_file.name, e)
+        return None
+
     def extract_audio(self, video_path: str, output_audio_path: str) -> str:
         """
         Extracts mono 16kHz PCM WAV audio from a video file using FFmpeg.

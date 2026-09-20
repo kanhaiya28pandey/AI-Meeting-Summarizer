@@ -43,3 +43,7 @@ class TranscriptionResponse(BaseModel):
         default_factory=list,
         description="Segment-level transcript with optional speaker and timestamp attributions"
     )
+    duration: Optional[int] = Field(
+        default=None,
+        description="Duration of the audio/video recording in seconds"
+    )
