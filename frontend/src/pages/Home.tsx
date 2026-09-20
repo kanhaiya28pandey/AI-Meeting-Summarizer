@@ -60,7 +60,7 @@ export const Home: React.FC = () => {
         </div>
         <h1
           style={{
-            fontSize: '2.5rem',
+            fontSize: 'clamp(1.75rem, 5vw, 2.5rem)',
             fontWeight: 800,
             color: 'var(--text-primary)',
             letterSpacing: '-0.03em',
@@ -72,7 +72,7 @@ export const Home: React.FC = () => {
         </h1>
         <p
           style={{
-            fontSize: '1.1rem',
+            fontSize: 'clamp(0.95rem, 2vw, 1.1rem)',
             color: 'var(--text-secondary)',
             lineHeight: 1.6,
             maxWidth: '620px',

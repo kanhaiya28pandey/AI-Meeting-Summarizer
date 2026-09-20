@@ -72,15 +72,13 @@ export const Login: React.FC = () => {
 
   return (
     <div
+      className="auth-page-container"
       style={{
-        height: 'calc(100vh - var(--header-height))',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '0.75rem 1rem',
         backgroundColor: 'var(--bg-canvas)',
         boxSizing: 'border-box',
-        overflow: 'hidden',
       }}
     >
       <div
@@ -528,11 +526,25 @@ export const Login: React.FC = () => {
           box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
           background-color: var(--bg-surface) !important;
         }
+        .auth-page-container {
+          min-height: calc(100vh - var(--header-height));
+          height: calc(100vh - var(--header-height));
+          padding: 0.75rem 1rem;
+          overflow: hidden;
+        }
         @media (max-width: 800px) {
+          .auth-page-container {
+            height: auto !important;
+            min-height: calc(100vh - var(--header-height)) !important;
+            overflow-y: auto !important;
+            padding: 1.25rem 1rem !important;
+            align-items: flex-start !important;
+          }
           .auth-split-card {
             flex-direction: column !important;
-            max-height: 95vh !important;
-            overflow-y: auto !important;
+            max-height: none !important;
+            overflow: visible !important;
+            border-radius: 16px !important;
           }
           .auth-hero-panel {
             display: none !important;

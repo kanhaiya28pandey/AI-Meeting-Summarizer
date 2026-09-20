@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
   User as UserIcon,
   Mail,
@@ -19,8 +19,7 @@ import {
   Database,
   LogIn,
   UserPlus,
-  BadgeCheck,
-  LogOut
+  BadgeCheck
 } from 'lucide-react';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Card } from '../components/ui/Card';
@@ -79,11 +78,10 @@ const COMMON_COUNTRIES = [
 ];
 
 export const Settings: React.FC = () => {
-  const navigate = useNavigate();
-  const { user, isAuthenticated, updateProfile, changePassword, logout } = useAuth();
+  const { user, isAuthenticated, updateProfile, changePassword } = useAuth();
   const { success: toastSuccess, error: toastError } = useToast();
 
-  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'system'>('profile');
+  const [activeTab, setActiveTab] = useState<'system' | 'profile' | 'security'>('system');
 
   useEffect(() => {
     document.title = 'Profile & Settings | AI Meeting Summarizer';
@@ -217,10 +215,10 @@ export const Settings: React.FC = () => {
   };
 
   return (
-    <div style={{ width: '100%', maxWidth: '1120px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+    <div style={{ width: '100%', maxWidth: '1120px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
       <PageHeader
         title="Profile &amp; Settings"
-        description="Manage your account profile, personal credentials, login security, and meeting processing configurations."
+        description="Manage your system configurations, personal profile credentials, and login security."
       />
 
       {isAuthenticated && user ? (
@@ -229,16 +227,16 @@ export const Settings: React.FC = () => {
           <div
             className="settings-hero-banner"
             style={{
-              borderRadius: '20px',
+              borderRadius: '16px',
               background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 45%, #4338ca 100%)',
-              padding: '2rem 2.25rem',
+              padding: '1.25rem 1.75rem',
               color: '#ffffff',
-              boxShadow: '0 10px 30px -10px rgba(67, 56, 202, 0.3)',
+              boxShadow: '0 8px 24px -8px rgba(67, 56, 202, 0.25)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               flexWrap: 'wrap',
-              gap: '1.5rem',
+              gap: '1.25rem',
               position: 'relative',
               overflow: 'hidden',
             }}
@@ -249,28 +247,28 @@ export const Settings: React.FC = () => {
                 position: 'absolute',
                 top: '-40px',
                 right: '-40px',
-                width: '200px',
-                height: '200px',
+                width: '180px',
+                height: '180px',
                 borderRadius: '50%',
                 background: 'radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%)',
                 pointerEvents: 'none',
               }}
             />
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
               <div
                 style={{
-                  width: '68px',
-                  height: '68px',
-                  borderRadius: '18px',
+                  width: '54px',
+                  height: '54px',
+                  borderRadius: '14px',
                   background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
                   color: '#ffffff',
                   fontWeight: 800,
-                  fontSize: '1.65rem',
+                  fontSize: '1.35rem',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: '0 6px 16px rgba(0, 0, 0, 0.25)',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
                   border: '2px solid rgba(255, 255, 255, 0.2)',
                   flexShrink: 0,
                 }}
@@ -279,13 +277,13 @@ export const Settings: React.FC = () => {
               </div>
 
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                  <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#ffffff', lineHeight: 1.2 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                  <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff', lineHeight: 1.2 }}>
                     {user.fullName}
                   </h2>
                   <span
                     style={{
-                      padding: '0.2rem 0.65rem',
+                      padding: '0.15rem 0.55rem',
                       borderRadius: '9999px',
                       backgroundColor: 'rgba(255, 255, 255, 0.15)',
                       color: '#ffffff',
@@ -301,88 +299,60 @@ export const Settings: React.FC = () => {
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '0.3rem',
-                      padding: '0.2rem 0.6rem',
+                      gap: '0.25rem',
+                      padding: '0.15rem 0.5rem',
                       borderRadius: '9999px',
                       backgroundColor: 'rgba(16, 185, 129, 0.2)',
                       color: '#6ee7b7',
-                      fontSize: '0.725rem',
+                      fontSize: '0.7rem',
                       fontWeight: 600,
                       border: '1px solid rgba(16, 185, 129, 0.35)',
                     }}
                   >
-                    <BadgeCheck size={14} />
+                    <BadgeCheck size={13} />
                     Verified User
                   </span>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginTop: '0.5rem', flexWrap: 'wrap', fontSize: '0.825rem', color: '#cbd5e1' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <Mail size={15} color="#a5b4fc" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginTop: '0.35rem', flexWrap: 'wrap', fontSize: '0.8rem', color: '#cbd5e1' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <Mail size={14} color="#a5b4fc" />
                     <span>{user.email}</span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <Phone size={15} color="#a5b4fc" />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <Phone size={14} color="#a5b4fc" />
                     <span>{user.countryCode} {user.mobileNumber}</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-              <div
-                style={{
-                  backgroundColor: 'rgba(0, 0, 0, 0.25)',
-                  padding: '0.65rem 1.15rem',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.2rem',
-                  fontSize: '0.75rem',
-                }}
-              >
-                <div style={{ color: '#94a3b8' }}>Account Identifier</div>
-                <div style={{ color: '#ffffff', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>User ID #{user.id}</div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  logout();
-                  toastSuccess?.('Logged out successfully');
-                  navigate('/login');
-                }}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.45rem',
-                  padding: '0.5rem 1rem',
-                  fontSize: '0.8rem',
-                  fontWeight: 600,
-                  color: '#fca5a5',
-                  backgroundColor: 'rgba(239, 68, 68, 0.15)',
-                  border: '1px solid rgba(239, 68, 68, 0.3)',
-                  borderRadius: '10px',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                }}
-                className="hover:bg-red-500/25"
-              >
-                <LogOut size={15} />
-                <span>Sign Out</span>
-              </button>
+            <div
+              style={{
+                backgroundColor: 'rgba(0, 0, 0, 0.25)',
+                padding: '0.5rem 1rem',
+                borderRadius: '10px',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.15rem',
+                fontSize: '0.75rem',
+              }}
+            >
+              <div style={{ color: '#94a3b8' }}>Account Identifier</div>
+              <div style={{ color: '#ffffff', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>User ID #{user.id}</div>
             </div>
           </div>
 
           {/* Segmented Navigation Tabs */}
           <div
+            className="settings-tabs-bar"
             style={{
               display: 'flex',
-              gap: '0.5rem',
+              gap: '0.4rem',
               backgroundColor: 'var(--bg-surface)',
-              padding: '0.4rem',
-              borderRadius: '14px',
+              padding: '0.35rem',
+              borderRadius: '12px',
               border: '1px solid var(--border)',
               width: 'fit-content',
               flexWrap: 'wrap',
@@ -390,13 +360,35 @@ export const Settings: React.FC = () => {
           >
             <button
               type="button"
+              onClick={() => setActiveTab('system')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.55rem 1.15rem',
+                borderRadius: '8px',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                border: 'none',
+                cursor: 'pointer',
+                backgroundColor: activeTab === 'system' ? 'var(--primary)' : 'transparent',
+                color: activeTab === 'system' ? '#ffffff' : 'var(--text-secondary)',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <Sliders size={16} />
+              <span>System &amp; Preferences</span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => setActiveTab('profile')}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.5rem',
-                padding: '0.6rem 1.25rem',
-                borderRadius: '10px',
+                padding: '0.55rem 1.15rem',
+                borderRadius: '8px',
                 fontSize: '0.85rem',
                 fontWeight: 600,
                 border: 'none',
@@ -417,8 +409,8 @@ export const Settings: React.FC = () => {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.5rem',
-                padding: '0.6rem 1.25rem',
-                borderRadius: '10px',
+                padding: '0.55rem 1.15rem',
+                borderRadius: '8px',
                 fontSize: '0.85rem',
                 fontWeight: 600,
                 border: 'none',
@@ -431,31 +423,109 @@ export const Settings: React.FC = () => {
               <KeyRound size={16} />
               <span>Security &amp; Password</span>
             </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('system')}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.6rem 1.25rem',
-                borderRadius: '10px',
-                fontSize: '0.85rem',
-                fontWeight: 600,
-                border: 'none',
-                cursor: 'pointer',
-                backgroundColor: activeTab === 'system' ? 'var(--primary)' : 'transparent',
-                color: activeTab === 'system' ? '#ffffff' : 'var(--text-secondary)',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              <Sliders size={16} />
-              <span>System &amp; Preferences</span>
-            </button>
           </div>
 
-          {/* TAB 1: Personal Profile */}
+          {/* TAB 1: System & Preferences */}
+          {activeTab === 'system' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', width: '100%' }}>
+              {/* Media Constraints */}
+              <Card padding="md" style={{ width: '100%' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                  <div
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '10px',
+                      backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                      color: 'var(--primary)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <FileAudio size={18} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                      Media &amp; File Constraints
+                    </h3>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                      Audio &amp; video formats supported for automatic transcription and summarization
+                    </p>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: '0.85rem' }}>
+                  <div style={{ padding: '0.85rem 1rem', borderRadius: '12px', backgroundColor: 'var(--bg-canvas)', border: '1px solid var(--border)' }}>
+                    <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)', marginBottom: '0.2rem' }}>Supported Formats</div>
+                    <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.9rem' }}>MP3, WAV, M4A, MP4, MOV</div>
+                  </div>
+                  <div style={{ padding: '0.85rem 1rem', borderRadius: '12px', backgroundColor: 'var(--bg-canvas)', border: '1px solid var(--border)' }}>
+                    <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)', marginBottom: '0.2rem' }}>Maximum File Size</div>
+                    <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.9rem' }}>100 MB per file</div>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Architecture & AI Pipeline */}
+              <Card padding="md" style={{ width: '100%' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                  <div
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '10px',
+                      backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                      color: 'var(--status-success)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Cpu size={18} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                      Connected Intelligence Pipeline
+                    </h3>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                      Microservices and database architecture status
+                    </p>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '0.85rem', fontSize: '0.825rem' }}>
+                  <div style={{ padding: '0.85rem 1rem', borderRadius: '12px', backgroundColor: 'var(--bg-canvas)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <Server size={18} color="var(--primary)" style={{ flexShrink: 0 }} />
+                    <div>
+                      <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>Backend Core</div>
+                      <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.85rem' }}>Spring Boot 3 (Java 21)</div>
+                    </div>
+                  </div>
+
+                  <div style={{ padding: '0.85rem 1rem', borderRadius: '12px', backgroundColor: 'var(--bg-canvas)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <Cpu size={18} color="#8b5cf6" style={{ flexShrink: 0 }} />
+                    <div>
+                      <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>AI Microservice</div>
+                      <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.85rem' }}>FastAPI + Neural AI Engine</div>
+                    </div>
+                  </div>
+
+                  <div style={{ padding: '0.85rem 1rem', borderRadius: '12px', backgroundColor: 'var(--bg-canvas)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <Database size={18} color="var(--status-success)" style={{ flexShrink: 0 }} />
+                    <div>
+                      <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>Data Persistence</div>
+                      <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.85rem' }}>PostgreSQL 18</div>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {/* TAB 2: Personal Profile */}
           {activeTab === 'profile' && (
             <Card padding="lg" style={{ width: '100%' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.75rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
@@ -543,7 +613,7 @@ export const Settings: React.FC = () => {
               )}
 
               <form onSubmit={handleProfileSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+                <div className="settings-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: '1.25rem' }}>
                   {/* Full Name */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                     <label style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
@@ -612,7 +682,7 @@ export const Settings: React.FC = () => {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+                <div className="settings-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: '1.25rem' }}>
                   {/* Email Address */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                     <label style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
@@ -824,7 +894,7 @@ export const Settings: React.FC = () => {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+                <div className="settings-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: '1rem' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                     <label style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                       New Password
@@ -929,157 +999,6 @@ export const Settings: React.FC = () => {
               </form>
             </Card>
           )}
-
-          {/* TAB 3: System & Preferences */}
-          {activeTab === 'system' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
-              {/* Media Constraints */}
-              <Card padding="lg">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', marginBottom: '1.25rem' }}>
-                  <div
-                    style={{
-                      width: '38px',
-                      height: '38px',
-                      borderRadius: '10px',
-                      backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                      color: 'var(--primary)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <FileAudio size={19} />
-                  </div>
-                  <div>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                      Media &amp; File Constraints
-                    </h3>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                      Audio &amp; video formats supported for automatic transcription and summarization
-                    </p>
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                  <div style={{ padding: '1rem 1.25rem', borderRadius: '12px', backgroundColor: 'var(--bg-canvas)', border: '1px solid var(--border)' }}>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Supported Formats</div>
-                    <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.95rem' }}>MP3, WAV, M4A, MP4, MOV</div>
-                  </div>
-                  <div style={{ padding: '1rem 1.25rem', borderRadius: '12px', backgroundColor: 'var(--bg-canvas)', border: '1px solid var(--border)' }}>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Maximum File Size</div>
-                    <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.95rem' }}>100 MB per file</div>
-                  </div>
-                </div>
-              </Card>
-
-              {/* Architecture & AI Pipeline */}
-              <Card padding="lg">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', marginBottom: '1.25rem' }}>
-                  <div
-                    style={{
-                      width: '38px',
-                      height: '38px',
-                      borderRadius: '10px',
-                      backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                      color: 'var(--status-success)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Cpu size={19} />
-                  </div>
-                  <div>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                      Connected Intelligence Pipeline
-                    </h3>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                      Microservices and database architecture status
-                    </p>
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', fontSize: '0.825rem' }}>
-                  <div style={{ padding: '1rem', borderRadius: '12px', backgroundColor: 'var(--bg-canvas)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <Server size={20} color="var(--primary)" />
-                    <div>
-                      <div style={{ color: 'var(--text-muted)', fontSize: '0.725rem' }}>Backend Core</div>
-                      <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Spring Boot 3 (Java 21)</div>
-                    </div>
-                  </div>
-
-                  <div style={{ padding: '1rem', borderRadius: '12px', backgroundColor: 'var(--bg-canvas)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <Cpu size={20} color="#8b5cf6" />
-                    <div>
-                      <div style={{ color: 'var(--text-muted)', fontSize: '0.725rem' }}>AI Microservice</div>
-                      <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>FastAPI + Neural AI Engine</div>
-                    </div>
-                  </div>
-
-                  <div style={{ padding: '1rem', borderRadius: '12px', backgroundColor: 'var(--bg-canvas)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <Database size={20} color="var(--status-success)" />
-                    <div>
-                      <div style={{ color: 'var(--text-muted)', fontSize: '0.725rem' }}>Data Persistence</div>
-                      <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>PostgreSQL 18</div>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            </div>
-          )}
-
-          {/* Account Active Session & Logout Card */}
-          <Card
-            padding="lg"
-            style={{
-              width: '100%',
-              backgroundColor: 'var(--bg-surface)',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-xl)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '1.25rem',
-              marginTop: '1.5rem',
-            }}
-          >
-            <div>
-              <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>
-                Active Session
-              </div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                Signed in as <strong>{user.fullName}</strong> (@{user.username})
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                logout();
-                toastSuccess?.('Logged out successfully');
-                navigate('/login');
-              }}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.6rem 1.25rem',
-                fontSize: '0.85rem',
-                fontWeight: 600,
-                color: 'var(--status-error)',
-                backgroundColor: 'rgba(239, 68, 68, 0.08)',
-                border: '1px solid rgba(239, 68, 68, 0.25)',
-                borderRadius: '10px',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-              }}
-              className="hover:bg-red-500/15"
-            >
-              <LogOut size={16} />
-              <span>Log Out from Account</span>
-            </button>
-          </Card>
         </>
       ) : (
         /* Unauthenticated View */
@@ -1130,7 +1049,22 @@ export const Settings: React.FC = () => {
           .settings-hero-banner {
             flex-direction: column !important;
             align-items: flex-start !important;
-            gap: 1.25rem !important;
+            padding: 1.25rem 1.25rem !important;
+            gap: 1rem !important;
+          }
+          .settings-tabs-bar {
+            width: 100% !important;
+          }
+          .settings-tabs-bar button {
+            flex: 1 1 auto !important;
+            justify-content: center !important;
+            padding: 0.5rem 0.75rem !important;
+            font-size: 0.8rem !important;
+          }
+        }
+        @media (max-width: 640px) {
+          .settings-form-grid {
+            grid-template-columns: 1fr !important;
           }
         }
       `}</style>

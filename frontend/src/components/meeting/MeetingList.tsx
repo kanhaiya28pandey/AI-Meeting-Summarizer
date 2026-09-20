@@ -44,8 +44,8 @@ export const MeetingList: FC<MeetingListProps> = ({
     <div
       style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
-        gap: '1.5rem',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))',
+        gap: '1.25rem',
         alignItems: 'stretch',
       }}
     >

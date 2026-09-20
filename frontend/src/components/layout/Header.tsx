@@ -102,7 +102,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
             fontWeight: 700,
             letterSpacing: '0.02em',
           }}
-          className="hidden sm:inline-flex"
+          className="header-ai-pill"
         >
           <span
             style={{
@@ -118,16 +118,16 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
         </div>
 
         {isAuthenticated && user ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
             <Link
               to="/settings"
               title="Profile & Settings"
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.6rem',
+                gap: '0.5rem',
                 textDecoration: 'none',
-                padding: '0.35rem 0.6rem',
+                padding: '0.3rem 0.5rem',
                 borderRadius: 'var(--radius-md)',
                 transition: 'background-color 0.15s ease',
               }}
@@ -145,11 +145,12 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  flexShrink: 0,
                 }}
               >
                 {getInitials(user.fullName)}
               </div>
-              <div className="hidden md:block text-left">
+              <div className="header-user-info" style={{ textAlign: 'left' }}>
                 <div
                   style={{
                     fontSize: '0.825rem',
@@ -179,8 +180,8 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '0.4rem',
-                padding: '0.45rem 0.75rem',
+                gap: '0.35rem',
+                padding: '0.45rem 0.65rem',
                 fontSize: '0.8rem',
                 fontWeight: 600,
                 color: 'var(--status-error)',
@@ -193,7 +194,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
               className="hover:bg-red-500/15"
             >
               <LogOut size={15} />
-              <span className="hidden sm:inline">Logout</span>
+              <span className="header-logout-text">Logout</span>
             </button>
           </div>
         ) : (
@@ -204,7 +205,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.35rem',
-                padding: '0.45rem 0.85rem',
+                padding: '0.45rem 0.75rem',
                 fontSize: '0.825rem',
                 fontWeight: 600,
                 color: 'var(--text-primary)',
@@ -225,7 +226,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.35rem',
-                padding: '0.45rem 0.85rem',
+                padding: '0.45rem 0.75rem',
                 fontSize: '0.825rem',
                 fontWeight: 600,
                 color: '#ffffff',
@@ -239,7 +240,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
               className="hover:opacity-95"
             >
               <UserPlus size={15} />
-              <span>Create Account</span>
+              <span className="header-btn-text">Create Account</span>
             </Link>
           </div>
         )}
@@ -252,6 +253,20 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
           }
           .mobile-menu-trigger {
             display: flex !important;
+          }
+          .header-ai-pill {
+            display: none !important;
+          }
+          .header-user-info {
+            display: none !important;
+          }
+        }
+        @media (max-width: 520px) {
+          .header-logout-text {
+            display: none !important;
+          }
+          .header-btn-text {
+            display: none !important;
           }
         }
         @media (min-width: 1024px) {

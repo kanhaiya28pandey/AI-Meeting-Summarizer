@@ -205,9 +205,15 @@ button {
   padding: 2rem;
 }
 
+@media (max-width: 1024px) {
+  .page-container {
+    padding: 1.5rem;
+  }
+}
+
 @media (max-width: 640px) {
   .page-container {
-    padding: 1.25rem 1rem;
+    padding: 1rem 0.75rem;
   }
 }
 

@@ -239,7 +239,7 @@ export const UploadCard: FC<UploadCardProps> = ({ className = '' }) => {
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
-                      maxWidth: '380px',
+                      maxWidth: 'min(100%, 380px)',
                     }}
                     title={selectedFile.name}
                   >
