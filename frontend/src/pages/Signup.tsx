@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
-  Sparkles,
   User,
   Mail,
   Phone,
+  Lock,
   Eye,
   EyeOff,
-  CheckCircle2,
   ArrowRight,
-  AlertCircle
+  ShieldCheck,
+  Zap,
+  Users,
+  AlertCircle,
+  Cpu,
+  Sparkles
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
@@ -72,8 +76,6 @@ export const Signup: React.FC = () => {
   const isAnalyzeRedirect = searchParams.get('redirect') === 'analyze';
 
   const [fullName, setFullName] = useState('');
-  const [customUsername, setCustomUsername] = useState('');
-  const [isUsernameEdited, setIsUsernameEdited] = useState(false);
   const [email, setEmail] = useState('');
   const [countryCode, setCountryCode] = useState('+91');
   const [mobileNumber, setMobileNumber] = useState('');
@@ -94,18 +96,6 @@ export const Signup: React.FC = () => {
     }
   }, [isAuthenticated, navigate, isAnalyzeRedirect, pendingUpload]);
 
-  const previewUsername = fullName.trim()
-    ? fullName.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')
-    : 'username';
-
-  const handleFullNameChange = (val: string) => {
-    setFullName(val);
-    if (!isUsernameEdited) {
-      const generated = val.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
-      setCustomUsername(generated);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -116,10 +106,6 @@ export const Signup: React.FC = () => {
     }
     if (!email.trim() || !/^\S+@\S+\.\S+$/.test(email.trim())) {
       setError('Please enter a valid email address.');
-      return;
-    }
-    if (customUsername.trim() && !/^[a-zA-Z0-9_]{3,30}$/.test(customUsername.trim())) {
-      setError('Username handle must be 3-30 characters containing letters, numbers, or underscores.');
       return;
     }
     let formattedCode = countryCode.trim();
@@ -146,9 +132,9 @@ export const Signup: React.FC = () => {
 
     setIsLoading(true);
     try {
+      // Backend automatically generates unique username from fullName!
       await signup({
         fullName: fullName.trim(),
-        username: customUsername.trim() || undefined,
         email: email.trim().toLowerCase(),
         countryCode: formattedCode,
         mobileNumber: cleanMobile,
@@ -160,7 +146,7 @@ export const Signup: React.FC = () => {
         navigate('/', { replace: true });
       }
     } catch (err: any) {
-      setError(err?.message || 'Failed to create account. Please check your information and try again.');
+      setError(err?.message || 'Failed to create account. Please check your details and try again.');
     } finally {
       setIsLoading(false);
     }
@@ -169,34 +155,38 @@ export const Signup: React.FC = () => {
   return (
     <div
       style={{
-        minHeight: 'calc(100vh - var(--header-height))',
+        height: 'calc(100vh - var(--header-height))',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '2.5rem 1rem',
+        padding: '0.75rem 1rem',
         backgroundColor: 'var(--bg-canvas)',
+        boxSizing: 'border-box',
+        overflow: 'hidden',
       }}
     >
       <div
+        className="auth-split-card"
         style={{
           width: '100%',
-          maxWidth: '1080px',
+          maxWidth: '960px',
+          maxHeight: 'calc(100vh - var(--header-height) - 1.5rem)',
           backgroundColor: 'var(--bg-surface)',
-          borderRadius: '24px',
+          borderRadius: '20px',
           border: '1px solid var(--border)',
-          boxShadow: '0 25px 50px -12px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.02)',
+          boxShadow: '0 20px 45px -12px rgba(15, 23, 42, 0.14), 0 0 0 1px rgba(0, 0, 0, 0.03)',
           display: 'flex',
           overflow: 'hidden',
-          flexWrap: 'wrap',
         }}
       >
-        {/* Left Side: SaaS Brand & Value Showcase */}
+        {/* Left Side: SaaS Value & Features Card */}
         <div
+          className="auth-hero-panel"
           style={{
-            flex: '1 1 420px',
-            background: 'linear-gradient(145deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%)',
+            flex: '1 1 380px',
+            background: 'linear-gradient(145deg, #090d16 0%, #111827 50%, #1e1b4b 100%)',
             color: '#ffffff',
-            padding: '3.25rem 2.75rem',
+            padding: '2rem 2.25rem',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
@@ -204,93 +194,131 @@ export const Signup: React.FC = () => {
             overflow: 'hidden',
           }}
         >
-          {/* Subtle Ambient Radial Glow */}
+          {/* Ambient Glow */}
           <div
             style={{
               position: 'absolute',
               top: '-15%',
               right: '-15%',
-              width: '400px',
-              height: '400px',
-              background: 'radial-gradient(circle, rgba(99, 102, 241, 0.3) 0%, transparent 70%)',
+              width: '320px',
+              height: '320px',
+              background: 'radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, transparent 70%)',
               borderRadius: '50%',
               pointerEvents: 'none',
             }}
           />
 
           <div>
-            {/* Top Brand Logo */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', marginBottom: '2.5rem' }}>
+            {/* Brand Header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
               <div
                 style={{
-                  width: '42px',
-                  height: '42px',
-                  borderRadius: '12px',
-                  background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, #10b981 0%, #6366f1 100%)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: '0 4px 14px rgba(99, 102, 241, 0.45)',
+                  boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)',
+                  flexShrink: 0,
                 }}
               >
-                <Sparkles size={22} color="#ffffff" />
+                <Cpu size={20} color="#ffffff" />
               </div>
               <div>
-                <div style={{ fontWeight: 800, fontSize: '1.15rem', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
+                <div style={{ fontWeight: 800, fontSize: '1.05rem', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
                   AI Meeting
                 </div>
-                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#a5b4fc', letterSpacing: '0.04em' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#6ee7b7', letterSpacing: '0.04em' }}>
                   Summarizer
                 </div>
               </div>
             </div>
 
             {/* Headline */}
-            <h2 style={{ fontSize: '1.85rem', fontWeight: 800, lineHeight: 1.25, marginBottom: '1rem', color: '#ffffff' }}>
-              Create Your Private Workspace.
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 800, lineHeight: 1.25, marginBottom: '0.65rem', color: '#ffffff' }}>
+              Join Free &amp; Supercharge Your Meetings.
             </h2>
-            <p style={{ fontSize: '0.925rem', color: '#cbd5e1', lineHeight: 1.6, marginBottom: '2rem' }}>
-              Keep your meeting recordings, speaker transcripts, and executive notes strictly isolated to your own secure account.
+            <p style={{ fontSize: '0.85rem', color: '#cbd5e1', lineHeight: 1.5, marginBottom: '1.5rem' }}>
+              Create your account to unlock private cloud meeting storage, speaker breakdown, and automated summaries.
             </p>
 
-            {/* Dynamic Auto-Username Preview Card */}
-            <div
-              style={{
-                padding: '1.15rem 1.25rem',
-                borderRadius: '16px',
-                backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                backdropFilter: 'blur(8px)',
-                marginBottom: '2rem',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
-                <Sparkles size={16} color="#a5b4fc" />
-                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#a5b4fc', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Auto Unique Username
-                </span>
+            {/* Feature Highlights */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                <div
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '7px',
+                    backgroundColor: 'rgba(16, 185, 129, 0.25)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Zap size={15} color="#6ee7b7" />
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.825rem', fontWeight: 700, color: '#f8fafc' }}>
+                    Instant AI Synthesis
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: '#94a3b8', lineHeight: 1.3 }}>
+                    Executive summaries, key decisions, and prioritized tasks
+                  </div>
+                </div>
               </div>
-              <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#ffffff', fontFamily: 'var(--font-mono)' }}>
-                @{previewUsername}
-              </div>
-              <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.35rem', lineHeight: 1.4 }}>
-                A unique @username is generated automatically from your name. You can use it to log in anytime!
-              </p>
-            </div>
 
-            {/* Feature Bullets */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <CheckCircle2 size={18} color="#34d399" />
-                <span style={{ fontSize: '0.85rem', color: '#e2e8f0' }}>No OTP verification required (Zero SMS delays)</span>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                <div
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '7px',
+                    backgroundColor: 'rgba(99, 102, 241, 0.25)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Users size={15} color="#a5b4fc" />
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.825rem', fontWeight: 700, color: '#f8fafc' }}>
+                    Speaker Attribution
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: '#94a3b8', lineHeight: 1.3 }}>
+                    Conversations separated person-by-person with timing
+                  </div>
+                </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <CheckCircle2 size={18} color="#34d399" />
-                <span style={{ fontSize: '0.85rem', color: '#e2e8f0' }}>Audio &amp; Video support up to 100 MB</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <CheckCircle2 size={18} color="#34d399" />
-                <span style={{ fontSize: '0.85rem', color: '#e2e8f0' }}>Full search and date filtering in My Meetings</span>
+
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                <div
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '7px',
+                    backgroundColor: 'rgba(245, 158, 11, 0.25)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <ShieldCheck size={15} color="#fcd34d" />
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.825rem', fontWeight: 700, color: '#f8fafc' }}>
+                    Auto-Generated @Username
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: '#94a3b8', lineHeight: 1.3 }}>
+                    A unique handle is created automatically to use for instant login
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -298,8 +326,8 @@ export const Signup: React.FC = () => {
           {/* Bottom Trust Badge */}
           <div
             style={{
-              marginTop: '2.5rem',
-              paddingTop: '1.25rem',
+              marginTop: '1.5rem',
+              paddingTop: '1rem',
               borderTop: '1px solid rgba(255, 255, 255, 0.1)',
               display: 'flex',
               alignItems: 'center',
@@ -308,8 +336,8 @@ export const Signup: React.FC = () => {
               color: '#94a3b8',
             }}
           >
-            <span>🔒 Bank-Grade BCrypt Encryption</span>
-            <span style={{ color: '#6ee7b7', fontWeight: 600 }}>100% Confidential</span>
+            <span>🔒 Confidential &amp; Encrypted</span>
+            <span style={{ color: '#6ee7b7', fontWeight: 600 }}>100% Free Workspace</span>
           </div>
         </div>
 
@@ -317,35 +345,36 @@ export const Signup: React.FC = () => {
         <div
           style={{
             flex: '1 1 480px',
-            padding: '3rem 2.75rem',
+            padding: '2rem 2.25rem',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
             backgroundColor: 'var(--bg-surface)',
+            boxSizing: 'border-box',
           }}
         >
-          <div style={{ marginBottom: '1.75rem' }}>
+          <div style={{ marginBottom: '1.1rem' }}>
             <span
               style={{
                 display: 'inline-block',
-                padding: '0.25rem 0.65rem',
+                padding: '0.2rem 0.55rem',
                 borderRadius: '9999px',
                 backgroundColor: 'rgba(16, 185, 129, 0.1)',
                 color: 'var(--status-success)',
-                fontSize: '0.75rem',
+                fontSize: '0.725rem',
                 fontWeight: 700,
                 letterSpacing: '0.04em',
                 textTransform: 'uppercase',
-                marginBottom: '0.5rem',
+                marginBottom: '0.45rem',
               }}
             >
-              Free Registration
+              Quick Registration
             </span>
-            <h1 style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.2 }}>
-              Get Started in Seconds
+            <h1 style={{ fontSize: '1.55rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+              Create Your Account
             </h1>
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.35rem' }}>
-              Create your account to start uploading, summarizing, and organizing your meetings.
+            <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+              Your unique @username handle will be automatically generated upon signup.
             </p>
           </div>
 
@@ -354,22 +383,22 @@ export const Signup: React.FC = () => {
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.75rem',
-                padding: '0.85rem 1rem',
-                marginBottom: '1.25rem',
-                borderRadius: '12px',
+                gap: '0.65rem',
+                padding: '0.65rem 0.85rem',
+                marginBottom: '0.9rem',
+                borderRadius: '10px',
                 backgroundColor: 'rgba(16, 185, 129, 0.08)',
                 border: '1px solid rgba(16, 185, 129, 0.25)',
                 color: 'var(--text-primary)',
-                fontSize: '0.85rem',
+                fontSize: '0.8rem',
               }}
             >
-              <Sparkles size={20} style={{ color: 'var(--status-success)', flexShrink: 0 }} />
+              <Sparkles size={18} style={{ color: 'var(--status-success)', flexShrink: 0 }} />
               <div>
                 <span style={{ fontWeight: 600, color: 'var(--status-success)' }}>Meeting Selected: </span>
                 <span>"{pendingUpload.title}"</span>
-                <div style={{ fontSize: '0.775rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                  Create your free account to immediately start AI transcription and analysis.
+                <div style={{ fontSize: '0.725rem', color: 'var(--text-secondary)' }}>
+                  Sign up to immediately run AI transcription and analysis.
                 </div>
               </div>
             </div>
@@ -380,162 +409,114 @@ export const Signup: React.FC = () => {
               style={{
                 display: 'flex',
                 alignItems: 'flex-start',
-                gap: '0.65rem',
-                padding: '0.85rem 1rem',
-                marginBottom: '1.25rem',
-                borderRadius: '12px',
+                gap: '0.55rem',
+                padding: '0.65rem 0.85rem',
+                marginBottom: '0.9rem',
+                borderRadius: '10px',
                 backgroundColor: 'var(--status-error-bg)',
                 border: '1px solid var(--status-error-border)',
                 color: 'var(--status-error-text)',
-                fontSize: '0.825rem',
+                fontSize: '0.8rem',
               }}
             >
-              <AlertCircle size={18} style={{ color: 'var(--status-error)', flexShrink: 0, marginTop: '1px' }} />
+              <AlertCircle size={16} style={{ color: 'var(--status-error)', flexShrink: 0, marginTop: '1px' }} />
               <div>
                 <div style={{ fontWeight: 600 }}>Registration Error</div>
-                <div style={{ marginTop: '2px', opacity: 0.9 }}>{error}</div>
+                <div style={{ marginTop: '1px', opacity: 0.9 }}>{error}</div>
               </div>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
-            {/* Full Name */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-              <label style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                Full Name
-              </label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type="text"
-                  required
-                  autoFocus
-                  value={fullName}
-                  onChange={(e) => handleFullNameChange(e.target.value)}
-                  placeholder="e.g. Kanhaiya Pandey"
-                  style={{
-                    width: '100%',
-                    padding: '0.7rem 1rem 0.7rem 2.4rem',
-                    fontSize: '0.875rem',
-                    color: 'var(--text-primary)',
-                    backgroundColor: 'var(--bg-canvas)',
-                    border: '1.5px solid var(--border)',
-                    borderRadius: '12px',
-                    outline: 'none',
-                    transition: 'all 0.15s ease',
-                  }}
-                  className="signup-input"
-                />
-                <User
-                  size={16}
-                  style={{
-                    position: 'absolute',
-                    left: '0.85rem',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: 'var(--text-muted)',
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Username Handle Field */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <label style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                  Login Username Handle
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+            {/* Row 1: Full Name & Email in 2-Column Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
+              {/* Full Name */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  Full Name
                 </label>
-                <span style={{ fontSize: '0.725rem', color: 'var(--text-muted)' }}>
-                  Auto-suggested or custom
-                </span>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type="text"
+                    required
+                    autoFocus
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="e.g. Alex Morgan"
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem 0.85rem 0.65rem 2.25rem',
+                      fontSize: '0.85rem',
+                      color: 'var(--text-primary)',
+                      backgroundColor: 'var(--bg-canvas)',
+                      border: '1.5px solid var(--border)',
+                      borderRadius: '10px',
+                      outline: 'none',
+                      transition: 'all 0.15s ease',
+                      boxSizing: 'border-box',
+                    }}
+                    className="signup-input"
+                  />
+                  <User
+                    size={15}
+                    style={{
+                      position: 'absolute',
+                      left: '0.75rem',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: 'var(--text-muted)',
+                    }}
+                  />
+                </div>
               </div>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type="text"
-                  value={customUsername}
-                  onChange={(e) => {
-                    setIsUsernameEdited(true);
-                    setCustomUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''));
-                  }}
-                  placeholder={previewUsername}
-                  style={{
-                    width: '100%',
-                    padding: '0.7rem 1rem 0.7rem 2.4rem',
-                    fontSize: '0.875rem',
-                    fontFamily: 'var(--font-mono)',
-                    color: 'var(--text-primary)',
-                    backgroundColor: 'var(--bg-canvas)',
-                    border: '1.5px solid var(--border)',
-                    borderRadius: '12px',
-                    outline: 'none',
-                    transition: 'all 0.15s ease',
-                  }}
-                  className="signup-input"
-                />
-                <span
-                  style={{
-                    position: 'absolute',
-                    left: '0.85rem',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: 'var(--primary)',
-                    fontWeight: 700,
-                    fontSize: '0.9rem',
-                  }}
-                >
-                  @
-                </span>
-              </div>
-              <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>
-                You can use this unique @username or your email to sign in.
+
+              {/* Email Address */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  Email Address
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="e.g. alex@company.com"
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem 0.85rem 0.65rem 2.25rem',
+                      fontSize: '0.85rem',
+                      color: 'var(--text-primary)',
+                      backgroundColor: 'var(--bg-canvas)',
+                      border: '1.5px solid var(--border)',
+                      borderRadius: '10px',
+                      outline: 'none',
+                      transition: 'all 0.15s ease',
+                      boxSizing: 'border-box',
+                    }}
+                    className="signup-input"
+                  />
+                  <Mail
+                    size={15}
+                    style={{
+                      position: 'absolute',
+                      left: '0.75rem',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: 'var(--text-muted)',
+                    }}
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Email Address */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-              <label style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                Email Address
-              </label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  style={{
-                    width: '100%',
-                    padding: '0.7rem 1rem 0.7rem 2.4rem',
-                    fontSize: '0.875rem',
-                    color: 'var(--text-primary)',
-                    backgroundColor: 'var(--bg-canvas)',
-                    border: '1.5px solid var(--border)',
-                    borderRadius: '12px',
-                    outline: 'none',
-                    transition: 'all 0.15s ease',
-                  }}
-                  className="signup-input"
-                />
-                <Mail
-                  size={16}
-                  style={{
-                    position: 'absolute',
-                    left: '0.85rem',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: 'var(--text-muted)',
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* 2 Fields for Mobile: Country Code Text/List + 10-Digit Number */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-              <label style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                Mobile Number <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>(Any Country Code + 10 Digits)</span>
+            {/* Row 2: Mobile Number (Country Code + 10 Digits) */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+              <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                Mobile Number
               </label>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
-                {/* Flexible Country Code Text Input with Suggestions */}
-                <div style={{ width: '130px', flexShrink: 0 }}>
+                <div style={{ width: '110px', flexShrink: 0 }}>
                   <input
                     type="text"
                     required
@@ -543,17 +524,17 @@ export const Signup: React.FC = () => {
                     value={countryCode}
                     onChange={(e) => setCountryCode(e.target.value)}
                     placeholder="+91"
-                    title="Type any country code (e.g. +91, +1, +44) or choose from list"
                     style={{
                       width: '100%',
-                      padding: '0.7rem 0.75rem',
-                      fontSize: '0.875rem',
+                      padding: '0.65rem 0.75rem',
+                      fontSize: '0.85rem',
                       fontWeight: 600,
                       color: 'var(--text-primary)',
                       backgroundColor: 'var(--bg-canvas)',
                       border: '1.5px solid var(--border)',
-                      borderRadius: '12px',
+                      borderRadius: '10px',
                       outline: 'none',
+                      boxSizing: 'border-box',
                     }}
                     className="signup-input"
                   />
@@ -566,33 +547,32 @@ export const Signup: React.FC = () => {
                   </datalist>
                 </div>
 
-                {/* 10-digit mobile number */}
-                <div style={{ flex: 1, position: 'relative' }}>
+                <div style={{ position: 'relative', flex: 1 }}>
                   <input
                     type="tel"
                     required
                     maxLength={10}
-                    pattern="[0-9]{10}"
                     value={mobileNumber}
-                    onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, ''))}
                     placeholder="10-digit mobile number"
                     style={{
                       width: '100%',
-                      padding: '0.7rem 1rem 0.7rem 2.4rem',
-                      fontSize: '0.875rem',
+                      padding: '0.65rem 0.85rem 0.65rem 2.25rem',
+                      fontSize: '0.85rem',
                       color: 'var(--text-primary)',
                       backgroundColor: 'var(--bg-canvas)',
                       border: '1.5px solid var(--border)',
-                      borderRadius: '12px',
+                      borderRadius: '10px',
                       outline: 'none',
+                      boxSizing: 'border-box',
                     }}
                     className="signup-input"
                   />
                   <Phone
-                    size={16}
+                    size={15}
                     style={{
                       position: 'absolute',
-                      left: '0.85rem',
+                      left: '0.75rem',
                       top: '50%',
                       transform: 'translateY(-50%)',
                       color: 'var(--text-muted)',
@@ -600,49 +580,61 @@ export const Signup: React.FC = () => {
                   />
                 </div>
               </div>
-              <span style={{ fontSize: '0.725rem', color: 'var(--text-muted)' }}>
-                ✨ Type any country code directly. No SMS OTP code needed.
-              </span>
             </div>
 
-            {/* Passwords in Responsive Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '0.75rem' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                <label style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+            {/* Row 3: Password & Confirm Password in 2-Column Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
+              {/* Password */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                   Password
                 </label>
                 <div style={{ position: 'relative' }}>
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
-                    minLength={8}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Min 8 chars"
+                    placeholder="Min 8 characters"
                     style={{
                       width: '100%',
-                      padding: '0.7rem 2.2rem 0.7rem 0.85rem',
-                      fontSize: '0.875rem',
+                      padding: '0.65rem 2.2rem 0.65rem 2.25rem',
+                      fontSize: '0.85rem',
                       color: 'var(--text-primary)',
                       backgroundColor: 'var(--bg-canvas)',
                       border: '1.5px solid var(--border)',
-                      borderRadius: '12px',
+                      borderRadius: '10px',
                       outline: 'none',
+                      boxSizing: 'border-box',
                     }}
                     className="signup-input"
+                  />
+                  <Lock
+                    size={15}
+                    style={{
+                      position: 'absolute',
+                      left: '0.75rem',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: 'var(--text-muted)',
+                    }}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
                     style={{
                       position: 'absolute',
-                      right: '0.65rem',
+                      right: '0.75rem',
                       top: '50%',
                       transform: 'translateY(-50%)',
-                      color: 'var(--text-muted)',
                       background: 'none',
                       border: 'none',
+                      padding: 0,
+                      color: 'var(--text-muted)',
                       cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
                     }}
                   >
                     {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
@@ -650,29 +642,40 @@ export const Signup: React.FC = () => {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                <label style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+              {/* Confirm Password */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                   Confirm Password
                 </label>
                 <div style={{ position: 'relative' }}>
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
-                    minLength={8}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Repeat password"
+                    placeholder="Re-enter password"
                     style={{
                       width: '100%',
-                      padding: '0.7rem 0.85rem',
-                      fontSize: '0.875rem',
+                      padding: '0.65rem 0.85rem 0.65rem 2.25rem',
+                      fontSize: '0.85rem',
                       color: 'var(--text-primary)',
                       backgroundColor: 'var(--bg-canvas)',
                       border: '1.5px solid var(--border)',
-                      borderRadius: '12px',
+                      borderRadius: '10px',
                       outline: 'none',
+                      boxSizing: 'border-box',
                     }}
                     className="signup-input"
+                  />
+                  <Lock
+                    size={15}
+                    style={{
+                      position: 'absolute',
+                      left: '0.75rem',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: 'var(--text-muted)',
+                    }}
                   />
                 </div>
               </div>
@@ -683,18 +686,18 @@ export const Signup: React.FC = () => {
               type="submit"
               disabled={isLoading}
               style={{
-                marginTop: '0.5rem',
+                marginTop: '0.35rem',
                 width: '100%',
-                padding: '0.85rem 1.25rem',
-                fontSize: '0.925rem',
+                padding: '0.7rem 1.25rem',
+                fontSize: '0.875rem',
                 fontWeight: 700,
                 color: '#ffffff',
-                background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                 border: 'none',
-                borderRadius: '12px',
+                borderRadius: '10px',
                 cursor: isLoading ? 'not-allowed' : 'pointer',
                 opacity: isLoading ? 0.7 : 1,
-                boxShadow: '0 4px 14px rgba(99, 102, 241, 0.35)',
+                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -707,8 +710,8 @@ export const Signup: React.FC = () => {
                 <>
                   <div
                     style={{
-                      width: '18px',
-                      height: '18px',
+                      width: '16px',
+                      height: '16px',
                       border: '2px solid rgba(255, 255, 255, 0.3)',
                       borderTopColor: '#ffffff',
                       borderRadius: '50%',
@@ -720,7 +723,7 @@ export const Signup: React.FC = () => {
               ) : (
                 <>
                   <span>Create Free Account</span>
-                  <ArrowRight size={17} />
+                  <ArrowRight size={16} />
                 </>
               )}
             </button>
@@ -729,10 +732,10 @@ export const Signup: React.FC = () => {
             <div
               style={{
                 textAlign: 'center',
-                fontSize: '0.85rem',
+                fontSize: '0.825rem',
                 color: 'var(--text-secondary)',
-                marginTop: '0.75rem',
-                paddingTop: '1.15rem',
+                marginTop: '0.35rem',
+                paddingTop: '0.75rem',
                 borderTop: '1px solid var(--border)',
               }}
             >
@@ -759,9 +762,14 @@ export const Signup: React.FC = () => {
           box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
           background-color: var(--bg-surface) !important;
         }
-        @media (max-width: 860px) {
+        @media (max-width: 800px) {
           .auth-split-card {
             flex-direction: column !important;
+            max-height: 95vh !important;
+            overflow-y: auto !important;
+          }
+          .auth-hero-panel {
+            display: none !important;
           }
         }
       `}</style>

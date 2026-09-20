@@ -650,7 +650,6 @@ export const Settings: React.FC = () => {
                           value={countryCode}
                           onChange={(e) => setCountryCode(e.target.value)}
                           placeholder="+91"
-                          title="Type any country code directly (e.g. +91, +1, +44) or choose from list"
                           style={{
                             width: '100%',
                             padding: '0.75rem 0.85rem',
@@ -1013,7 +1012,7 @@ export const Settings: React.FC = () => {
                     <Cpu size={20} color="#8b5cf6" />
                     <div>
                       <div style={{ color: 'var(--text-muted)', fontSize: '0.725rem' }}>AI Microservice</div>
-                      <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>FastAPI + Gemini Flash</div>
+                      <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>FastAPI + Neural AI Engine</div>
                     </div>
                   </div>
 

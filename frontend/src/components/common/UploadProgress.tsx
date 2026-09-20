@@ -73,7 +73,7 @@ export const UploadProgress: FC<UploadProgressProps> = ({ progress }) => {
             lineHeight: 1.4,
           }}
         >
-          Audio upload complete. The backend is running Gemini transcription and meeting analysis. Please wait...
+          Audio upload complete. The backend is running AI neural transcription and meeting analysis. Please wait...
         </p>
       )}
     </div>

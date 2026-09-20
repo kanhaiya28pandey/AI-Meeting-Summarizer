@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { Menu, Sparkles, LogOut, LogIn, UserPlus } from 'lucide-react';
+import { Menu, LogOut, LogIn, UserPlus } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
 export interface HeaderProps {
@@ -92,18 +92,29 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
           style={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '0.375rem',
-            padding: '0.25rem 0.65rem',
+            gap: '0.45rem',
+            padding: '0.28rem 0.75rem',
             borderRadius: 'var(--radius-full)',
-            backgroundColor: 'var(--primary-light)',
-            color: 'var(--primary-text)',
+            backgroundColor: 'rgba(99, 102, 241, 0.09)',
+            border: '1px solid rgba(99, 102, 241, 0.22)',
+            color: 'var(--primary)',
             fontSize: '0.75rem',
-            fontWeight: 600,
+            fontWeight: 700,
+            letterSpacing: '0.02em',
           }}
           className="hidden sm:inline-flex"
         >
-          <Sparkles size={13} />
-          <span>Gemini AI</span>
+          <span
+            style={{
+              width: '7px',
+              height: '7px',
+              borderRadius: '50%',
+              backgroundColor: '#10b981',
+              boxShadow: '0 0 6px #10b981',
+              display: 'inline-block',
+            }}
+          />
+          <span>AI Intelligence</span>
         </div>
 
         {isAuthenticated && user ? (

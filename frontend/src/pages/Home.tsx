@@ -24,7 +24,7 @@ export const Home: React.FC = () => {
     {
       step: '3',
       title: 'Intelligent Analysis',
-      desc: 'Gemini AI extracts a concise summary, key decisions, and action items.',
+      desc: 'Neural AI models extract a concise summary, key decisions, and action items.',
       icon: <Sparkles size={20} style={{ color: '#6366f1' }} />,
     },
     {
