@@ -100,7 +100,7 @@ class MeetingAnalysisService:
 
             response = None
             candidate_models = [self.model]
-            for extra in ["gemini-3.5-flash", "gemini-3.6-flash"]:
+            for extra in ["gemini-3.6-flash", "gemini-flash-latest", "gemini-3.7-flash", "gemini-3.5-flash-lite"]:
                 if extra not in candidate_models:
                     candidate_models.append(extra)
 

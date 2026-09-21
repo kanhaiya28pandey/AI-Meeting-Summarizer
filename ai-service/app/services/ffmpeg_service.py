@@ -182,6 +182,39 @@ class FFmpegService:
         )
         return str(output_path)
 
+    def optimize_audio(self, input_path: str, output_path: str) -> str:
+        """
+        Compresses large audio (like uncompressed WAV) into 32kbps mono MP3
+        for ultra-fast cloud transfer to Gemini API.
+        """
+        if not self.is_available():
+            return input_path
+
+        cmd = [
+            self.ffmpeg_bin,
+            "-y",
+            "-i", str(input_path),
+            "-vn",
+            "-ac", "1",
+            "-ar", "16000",
+            "-b:a", "32k",
+            "-f", "mp3",
+            str(output_path),
+        ]
+        try:
+            result = subprocess.run(cmd, capture_output=True, timeout=30, check=False)
+            if result.returncode == 0 and Path(output_path).exists() and Path(output_path).stat().st_size > 0:
+                logger.info(
+                    "Compressed audio %s -> %s (%d -> %d bytes)",
+                    input_path, output_path,
+                    Path(input_path).stat().st_size,
+                    Path(output_path).stat().st_size
+                )
+                return str(output_path)
+        except Exception as e:
+            logger.warning("FFmpeg audio optimization failed, proceeding with original audio: %s", e)
+        return input_path
+
     @staticmethod
     def _cleanup_file(path: Path) -> None:
         try:

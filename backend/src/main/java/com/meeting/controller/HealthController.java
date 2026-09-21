@@ -85,4 +85,52 @@ public class HealthController {
             return ResponseEntity.status(org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE).body(response);
         }
     }
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.meeting.repository.UserRepository userRepository;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.meeting.repository.MeetingRepository meetingRepository;
+
+    @GetMapping("/db-diagnostic")
+    public ResponseEntity<Map<String, Object>> checkDbDiagnostic() {
+        Map<String, Object> response = new java.util.LinkedHashMap<>();
+        java.util.List<String> tables = new java.util.ArrayList<>();
+        if (dataSource != null) {
+            try (java.sql.Connection conn = dataSource.getConnection()) {
+                java.sql.DatabaseMetaData meta = conn.getMetaData();
+                try (java.sql.ResultSet rs = meta.getTables(null, "public", "%", new String[]{"TABLE"})) {
+                    while (rs.next()) {
+                        tables.add(rs.getString("TABLE_NAME"));
+                    }
+                }
+                response.put("tables", tables);
+                response.put("db_product", meta.getDatabaseProductName() + " " + meta.getDatabaseProductVersion());
+            } catch (Exception e) {
+                response.put("metadata_error", e.getClass().getName() + ": " + e.getMessage());
+            }
+        } else {
+            response.put("dataSource", "null");
+        }
+
+        if (userRepository != null) {
+            try {
+                long userCount = userRepository.count();
+                response.put("user_count", userCount);
+            } catch (Exception e) {
+                response.put("user_repository_error", e.getClass().getName() + ": " + e.getMessage());
+            }
+        }
+
+        if (meetingRepository != null) {
+            try {
+                long meetingCount = meetingRepository.count();
+                response.put("meeting_count", meetingCount);
+            } catch (Exception e) {
+                response.put("meeting_repository_error", e.getClass().getName() + ": " + e.getMessage());
+            }
+        }
+
+        return ResponseEntity.ok(response);
+    }
 }

@@ -157,12 +157,25 @@ class TranscriptionService:
         # Extract media duration via FFmpeg
         duration = ffmpeg_service.get_media_duration(file_path)
 
+        upload_path = file_path
+        upload_mime = mime_type
+        optimized_temp = None
+
+        # Pre-compress large audio (> 3MB) or WAV files to compact MP3 to speed up cloud upload
+        if (Path(file_path).stat().st_size > 3 * 1024 * 1024 or original_filename.lower().endswith(".wav")) and ffmpeg_service.is_available():
+            optimized_candidate = str(Path(file_path).with_suffix(".opt.mp3"))
+            res = ffmpeg_service.optimize_audio(file_path, optimized_candidate)
+            if res != file_path and Path(res).exists():
+                upload_path = res
+                upload_mime = "audio/mp3"
+                optimized_temp = res
+
         uploaded_file = None
         logger.info(
             "Starting audio transcription for file=%s (size=%d bytes, mime=%s, duration=%s) using model=%s",
             original_filename,
-            Path(file_path).stat().st_size,
-            mime_type,
+            Path(upload_path).stat().st_size,
+            upload_mime,
             duration,
             self.model,
         )
@@ -172,13 +185,13 @@ class TranscriptionService:
             try:
                 try:
                     uploaded_file = client.files.upload(
-                        file=file_path,
-                        config=types.UploadFileConfig(mime_type=mime_type),
+                        file=upload_path,
+                        config=types.UploadFileConfig(mime_type=upload_mime),
                     )
                 except TypeError:
                     uploaded_file = client.files.upload(
-                        file=file_path,
-                        mime_type=mime_type,
+                        file=upload_path,
+                        mime_type=upload_mime,
                     )
                 logger.info("Successfully uploaded file to Gemini Files API: name=%s", getattr(uploaded_file, "name", "unknown"))
             except Exception as e:
@@ -212,7 +225,7 @@ class TranscriptionService:
                     type(primary_err).__name__,
                     str(primary_err),
                 )
-                fallback_models = [settings.GEMINI_MODEL, "gemini-3.5-flash", "gemini-3.6-flash"]
+                fallback_models = [m for m in [settings.GEMINI_MODEL, "gemini-3.6-flash", "gemini-flash-latest", "gemini-3.7-flash"] if m != self.model]
                 last_err = primary_err
                 for fb_model in fallback_models:
                     try:
@@ -322,6 +335,11 @@ class TranscriptionService:
                 ) from e
 
         finally:
+            if optimized_temp and Path(optimized_temp).exists():
+                try:
+                    os.remove(optimized_temp)
+                except Exception as del_err:
+                    logger.warning("Failed to remove optimized temp audio '%s': %s", optimized_temp, del_err)
             # Safe cleanup of uploaded file in Gemini Files API
             if uploaded_file and hasattr(uploaded_file, "name") and uploaded_file.name:
                 try:
