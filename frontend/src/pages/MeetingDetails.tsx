@@ -116,11 +116,28 @@ export const MeetingDetails: FC = () => {
                     fontSize: '0.9rem',
                     color: 'var(--status-error-text)',
                     lineHeight: 1.5,
-                    marginBottom: '1rem',
+                    marginBottom: meeting.summary && meeting.summary.startsWith('Processing error:') ? '0.5rem' : '1rem',
                   }}
                 >
                   Your meeting record is still saved, but the processing pipeline encountered an error.
                 </p>
+                {meeting.summary && meeting.summary.startsWith('Processing error:') && (
+                  <p
+                    style={{
+                      fontSize: '0.8rem',
+                      fontFamily: 'monospace',
+                      backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                      border: '1px solid rgba(239, 68, 68, 0.25)',
+                      padding: '0.45rem 0.75rem',
+                      borderRadius: 'var(--radius-sm)',
+                      color: 'var(--status-error-text)',
+                      marginBottom: '1rem',
+                      wordBreak: 'break-word',
+                    }}
+                  >
+                    {meeting.summary}
+                  </p>
+                )}
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                   <Button
                     variant="secondary"

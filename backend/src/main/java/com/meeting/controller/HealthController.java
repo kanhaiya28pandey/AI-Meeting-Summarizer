@@ -21,6 +21,12 @@ public class HealthController {
         this.dataSource = dataSource;
     }
 
+    @org.springframework.beans.factory.annotation.Value("${ai.service.url:http://localhost:8000}")
+    private String aiServiceUrl;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private org.springframework.web.client.RestClient aiServiceRestClient;
+
     @GetMapping
     public ResponseEntity<Map<String, String>> checkHealth() {
         return ResponseEntity.ok(Map.of(
@@ -50,6 +56,33 @@ public class HealthController {
                     "status", "DOWN",
                     "database", "DISCONNECTED"
             ));
+        }
+    }
+
+    @GetMapping("/ai-connectivity")
+    public ResponseEntity<Map<String, Object>> checkAiConnectivity() {
+        Map<String, Object> response = new java.util.LinkedHashMap<>();
+        String effectiveUrl = com.meeting.config.AiServiceConfig.resolveEffectiveAiUrl(aiServiceUrl);
+        response.put("configured_ai_service_url", aiServiceUrl);
+        response.put("effective_ai_service_url", effectiveUrl);
+        if (aiServiceRestClient == null) {
+            response.put("status", "ERROR");
+            response.put("message", "aiServiceRestClient bean not found");
+            return ResponseEntity.status(500).body(response);
+        }
+        try {
+            String aiHealth = aiServiceRestClient.get()
+                    .uri("/api/health")
+                    .retrieve()
+                    .body(String.class);
+            response.put("status", "UP");
+            response.put("ai_service_response", aiHealth);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("status", "DOWN");
+            response.put("error_type", e.getClass().getName());
+            response.put("error_message", e.getMessage());
+            return ResponseEntity.status(org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE).body(response);
         }
     }
 }
