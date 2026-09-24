@@ -5,11 +5,21 @@ import { ApiClientError } from "../types/api";
 
 export { ApiClientError };
 
-const BASE_URL = (
-  typeof window !== "undefined"
-    ? (import.meta.env.VITE_API_BASE_URL || "/api")
-    : (import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api")
-).replace(/\/+$/, "");
+function getBaseUrl(): string {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL.replace(/\/+$/, "");
+  }
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    if (host.includes("vercel.app") || host.includes("netlify.app") || host.includes("onrender.com")) {
+      return "https://ai-meeting-summarizer-oamb.onrender.com/api";
+    }
+    return "/api";
+  }
+  return "http://localhost:8080/api";
+}
+
+const BASE_URL = getBaseUrl();
 
 const TOKEN_KEY = "ai_meeting_token";
 const USER_KEY = "ai_meeting_user";
