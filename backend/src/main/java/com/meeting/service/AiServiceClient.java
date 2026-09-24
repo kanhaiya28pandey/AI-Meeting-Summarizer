@@ -71,8 +71,30 @@ public class AiServiceClient {
                 }
             };
 
+            String ext = originalFilename != null && originalFilename.contains(".")
+                    ? originalFilename.substring(originalFilename.lastIndexOf('.')).toLowerCase()
+                    : "";
+            MediaType partMediaType;
+            if (ext.equals(".mp3")) {
+                partMediaType = MediaType.valueOf("audio/mp3");
+            } else if (ext.equals(".wav")) {
+                partMediaType = MediaType.valueOf("audio/wav");
+            } else if (ext.equals(".m4a")) {
+                partMediaType = MediaType.valueOf("audio/m4a");
+            } else if (ext.equals(".mp4")) {
+                partMediaType = MediaType.valueOf("video/mp4");
+            } else if (ext.equals(".mov")) {
+                partMediaType = MediaType.valueOf("video/quicktime");
+            } else {
+                partMediaType = MediaType.valueOf("audio/mpeg");
+            }
+
+            org.springframework.http.HttpHeaders partHeaders = new org.springframework.http.HttpHeaders();
+            partHeaders.setContentType(partMediaType);
+            org.springframework.http.HttpEntity<FileSystemResource> fileEntity = new org.springframework.http.HttpEntity<>(fileResource, partHeaders);
+
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-            body.add("file", fileResource);
+            body.add("file", fileEntity);
 
             AiTranscriptionResponse response = restClient.post()
                     .uri("/api/v1/transcription")
